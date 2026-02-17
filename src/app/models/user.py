@@ -1,5 +1,6 @@
 from ..extensions import db
 from datetime import datetime
+from .role import user_roles
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -10,6 +11,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    roles = db.relationship('Role', secondary=user_roles, back_populates='users')
 
     def __repr__(self):
         return f'<User {self.username}>'
