@@ -2,6 +2,7 @@ from ..extensions import db
 from datetime import datetime
 from .role import user_roles
 import bcrypt
+from app.extensions import login_manager
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -52,3 +53,7 @@ class User(db.Model):
         Возвращает True или False.
         """
         return any(role.name == role_name for role in self.roles)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))

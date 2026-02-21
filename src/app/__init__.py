@@ -12,10 +12,15 @@ def create_app(config_name='default'):
 
     db.init_app(app)
     login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Пожалуйста, войдите в систему для доступа к этой странице.'
+    login_manager.login_message_category = 'warning'
     migrate.init_app(app, db)
     app.register_blueprint(auth_bp)
     from app.routes.admin import admin_bp
     app.register_blueprint(admin_bp)
+    from app.routes.hr import hr_bp
+    app.register_blueprint(hr_bp)
 
 
     # Импортируем модели, чтобы они были зарегистрированы

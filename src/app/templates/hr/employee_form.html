@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Добавление сотрудника{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Добавить сотрудника</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="last_name" class="form-label">Фамилия</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="first_name" class="form-label">Имя</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email">
+        </div>
+        <div class="mb-3">
+            <label for="hire_date" class="form-label">Дата найма</label>
+            <input type="date" class="form-control" id="hire_date" name="hire_date" required>
+        </div>
+        <div class="mb-3">
+            <label for="department_id" class="form-label">Отдел</label>
+            <select class="form-control" id="department_id" name="department_id">
+                <option value="">-- Выберите отдел --</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="position_id" class="form-label">Должность</label>
+            <select class="form-control" id="position_id" name="position_id">
+                <option value="">-- Выберите должность --</option>
+                {% for pos in positions %}
+                <option value="{{ pos.id }}">{{ pos.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{{ url_for('hr.employees_list') }}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}
