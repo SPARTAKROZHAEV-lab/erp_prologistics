@@ -1,34 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Добавление сотрудника{% endblock %}
+{% block title %}{% if edit_mode %}Редактирование{% else %}Добавление{% endif %} сотрудника{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Добавить сотрудника</h1>
+    <h1>{% if edit_mode %}Редактировать сотрудника{% else %}Добавить сотрудника{% endif %}</h1>
     <form method="POST">
         <!-- Основные поля сотрудника -->
         <div class="mb-3">
             <label for="last_name" class="form-label">Фамилия</label>
-            <input type="text" class="form-control" id="last_name" name="last_name" required>
+            <input type="text" class="form-control" id="last_name" name="last_name" 
+                   value="{{ employee.last_name if employee else '' }}" required>
         </div>
         <div class="mb-3">
             <label for="first_name" class="form-label">Имя</label>
-            <input type="text" class="form-control" id="first_name" name="first_name" required>
+            <input type="text" class="form-control" id="first_name" name="first_name" 
+                   value="{{ employee.first_name if employee else '' }}" required>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email (рабочий)</label>
-            <input type="email" class="form-control" id="email" name="email">
+            <input type="email" class="form-control" id="email" name="email" 
+                   value="{{ employee.email if employee else '' }}">
         </div>
         <div class="mb-3">
             <label for="hire_date" class="form-label">Дата найма</label>
-            <input type="date" class="form-control" id="hire_date" name="hire_date" required>
+            <input type="date" class="form-control" id="hire_date" name="hire_date" 
+                   value="{{ employee.hire_date if employee else '' }}" required>
         </div>
         <div class="mb-3">
             <label for="department_id" class="form-label">Отдел</label>
             <select class="form-control" id="department_id" name="department_id">
                 <option value="">-- Выберите отдел --</option>
                 {% for dept in departments %}
-                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                <option value="{{ dept.id }}" 
+                    {% if employee and employee.position and employee.position.department_id == dept.id %}selected{% endif %}>
+                    {{ dept.name }}
+                </option>
                 {% endfor %}
             </select>
         </div>
@@ -37,26 +44,26 @@
             <select class="form-control" id="position_id" name="position_id">
                 <option value="">-- Выберите должность --</option>
                 {% for pos in positions %}
-                <option value="{{ pos.id }}">{{ pos.title }}</option>
+                <option value="{{ pos.id }}" 
+                    {% if employee and employee.position_id == pos.id %}selected{% endif %}>
+                    {{ pos.title }}
+                </option>
                 {% endfor %}
             </select>
         </div>
 
+        {% if not edit_mode %}
         <hr>
         <h4>Учётная запись пользователя</h4>
         <div class="mb-3">
             <label class="form-label">Вариант</label>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="user_option" id="user_option_existing" value="existing" checked>
-                <label class="form-check-label" for="user_option_existing">
-                    Выбрать существующего пользователя
-                </label>
+                <label class="form-check-label" for="user_option_existing">Выбрать существующего пользователя</label>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="user_option" id="user_option_new" value="new">
-                <label class="form-check-label" for="user_option_new">
-                    Создать нового пользователя
-                </label>
+                <label class="form-check-label" for="user_option_new">Создать нового пользователя</label>
             </div>
         </div>
 
@@ -87,14 +94,15 @@
                 <input type="password" class="form-control" id="new_password" name="new_password">
             </div>
         </div>
+        {% endif %}
 
         <button type="submit" class="btn btn-primary">Сохранить</button>
         <a href="{{ url_for('hr.employees_list') }}" class="btn btn-secondary">Отмена</a>
     </form>
 </div>
 
+{% if not edit_mode %}
 <script>
-    // Простой скрипт для переключения блоков
     document.addEventListener('DOMContentLoaded', function() {
         const existingBlock = document.getElementById('existing_user_block');
         const newBlock = document.getElementById('new_user_block');
@@ -104,7 +112,6 @@
             if (document.getElementById('user_option_existing').checked) {
                 existingBlock.style.display = 'block';
                 newBlock.style.display = 'none';
-                // Отключаем поля нового пользователя, чтобы они не отправлялись
                 document.getElementById('new_email').disabled = true;
                 document.getElementById('new_username').disabled = true;
                 document.getElementById('new_password').disabled = true;
@@ -120,7 +127,8 @@
         }
         
         radios.forEach(radio => radio.addEventListener('change', toggleBlocks));
-        toggleBlocks(); // установить начальное состояние
+        toggleBlocks();
     });
 </script>
+{% endif %}
 {% endblock %}

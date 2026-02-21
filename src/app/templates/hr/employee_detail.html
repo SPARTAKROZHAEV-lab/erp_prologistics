@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Сотрудник {{ employee.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ employee.full_name }}</h1>
+    <div class="card">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">ID</dt>
+                <dd class="col-sm-9">{{ employee.id }}</dd>
+
+                <dt class="col-sm-3">Фамилия</dt>
+                <dd class="col-sm-9">{{ employee.last_name }}</dd>
+
+                <dt class="col-sm-3">Имя</dt>
+                <dd class="col-sm-9">{{ employee.first_name }}</dd>
+
+                {% if employee.middle_name %}
+                <dt class="col-sm-3">Отчество</dt>
+                <dd class="col-sm-9">{{ employee.middle_name }}</dd>
+                {% endif %}
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">{{ employee.email or 'не указан' }}</dd>
+
+                <dt class="col-sm-3">Телефон</dt>
+                <dd class="col-sm-9">{{ employee.phone or 'не указан' }}</dd>
+
+                <dt class="col-sm-3">Дата рождения</dt>
+                <dd class="col-sm-9">{{ employee.birth_date or 'не указана' }}</dd>
+
+                <dt class="col-sm-3">Адрес</dt>
+                <dd class="col-sm-9">{{ employee.address or 'не указан' }}</dd>
+
+                <dt class="col-sm-3">Должность</dt>
+                <dd class="col-sm-9">{{ employee.position.title if employee.position else 'не назначена' }}</dd>
+
+                <dt class="col-sm-3">Отдел</dt>
+                <dd class="col-sm-9">{{ employee.position.department.name if employee.position and employee.position.department else 'не указан' }}</dd>
+
+                <dt class="col-sm-3">Дата найма</dt>
+                <dd class="col-sm-9">{{ employee.hire_date }}</dd>
+
+                <dt class="col-sm-3">Статус</dt>
+                <dd class="col-sm-9">
+                    {% if employee.is_active %}
+                        <span class="badge bg-success">Активен</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Уволен</span>
+                    {% endif %}
+                </dd>
+
+                <dt class="col-sm-3">Учётная запись</dt>
+                <dd class="col-sm-9">
+                    {% if employee.user %}
+                        {{ employee.user.email }} ({{ employee.user.username }})
+                    {% else %}
+                        не привязана
+                    {% endif %}
+                </dd>
+            </dl>
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('hr.employee_edit', employee_id=employee.id) }}" class="btn btn-warning">Редактировать</a>
+            <form action="{{ url_for('hr.employee_delete', employee_id=employee.id) }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить сотрудника?')">Удалить</button>
+            </form>
+            <a href="{{ url_for('hr.employees_list') }}" class="btn btn-secondary">Назад к списку</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
