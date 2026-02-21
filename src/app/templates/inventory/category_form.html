@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{% if category %}Редактирование{% else %}Добавление{% endif %} категории{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{% if category %}Редактировать категорию{% else %}Добавить категорию{% endif %}</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="name" class="form-label">Название *</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ category.name if category else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ category.description if category else '' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="parent_id" class="form-label">Родительская категория</label>
+            <select class="form-control" id="parent_id" name="parent_id">
+                <option value="">-- Нет --</option>
+                {% for cat in categories %}
+                    {% if not category or cat.id != category.id %}
+                        <option value="{{ cat.id }}" {% if category and category.parent_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{{ url_for('inventory.categories_list') }}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

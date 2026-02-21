@@ -32,6 +32,8 @@
                 </td>
                 <td>
                     <a href="{{ url_for('admin.user_roles', user_id=user.id) }}" class="btn btn-sm btn-warning">Назначить роли</a>
+                    <!-- Кнопка для входа под пользователем (только для администратора) -->
+                    <a href="{{ url_for('admin.impersonate', user_id=user.id) }}" class="btn btn-sm btn-success" onclick="return confirm('Войти как {{ user.email }}?')">Войти как</a>
                 </td>
             </tr>
             {% endfor %}

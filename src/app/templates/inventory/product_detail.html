@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ product.name }}</h1>
+    <div class="card">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">ID</dt>
+                <dd class="col-sm-9">{{ product.id }}</dd>
+                <dt class="col-sm-3">Артикул</dt>
+                <dd class="col-sm-9">{{ product.sku }}</dd>
+                <dt class="col-sm-3">Штрих-код</dt>
+                <dd class="col-sm-9">{{ product.barcode or 'не указан' }}</dd>
+                <dt class="col-sm-3">Категория</dt>
+                <dd class="col-sm-9">{{ product.category.name if product.category else 'не указана' }}</dd>
+                <dt class="col-sm-3">Единица измерения</dt>
+                <dd class="col-sm-9">{{ product.unit }}</dd>
+                <dt class="col-sm-3">Цена</dt>
+                <dd class="col-sm-9">{{ product.price }}</dd>
+                <dt class="col-sm-3">Себестоимость</dt>
+                <dd class="col-sm-9">{{ product.cost }}</dd>
+                <dt class="col-sm-3">Описание</dt>
+                <dd class="col-sm-9">{{ product.description or 'нет' }}</dd>
+                <dt class="col-sm-3">Статус</dt>
+                <dd class="col-sm-9">{% if product.is_active %}Активен{% else %}Неактивен{% endif %}</dd>
+                <dt class="col-sm-3">Дата создания</dt>
+                <dd class="col-sm-9">{{ product.created_at }}</dd>
+                <dt class="col-sm-3">Дата обновления</dt>
+                <dd class="col-sm-9">{{ product.updated_at }}</dd>
+            </dl>
+            <h3>Остатки по складам</h3>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Склад</th>
+                        <th>Количество</th>
+                        <th>Резерв</th>
+                        <th>Доступно</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in product.stocks %}
+                    <tr>
+                        <td>{{ stock.warehouse.name }}</td>
+                        <td>{{ stock.quantity }}</td>
+                        <td>{{ stock.reserved }}</td>
+                        <td>{{ stock.available }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4">Нет остатков</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('inventory.product_edit', product_id=product.id) }}" class="btn btn-warning">Редактировать</a>
+            <a href="{{ url_for('inventory.products_list') }}" class="btn btn-secondary">Назад к списку</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Категории товаров{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Категории товаров</h1>
+    <a href="{{ url_for('inventory.category_add') }}" class="btn btn-primary mb-3">Добавить категорию</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Описание</th>
+                <th>Родительская категория</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td>{{ cat.id }}</td>
+                <td>{{ cat.name }}</td>
+                <td>{{ cat.description or '' }}</td>
+                <td>{{ cat.parent.name if cat.parent else '' }}</td>
+                <td>
+                    <a href="{{ url_for('inventory.category_edit', category_id=cat.id) }}" class="btn btn-sm btn-warning">Редактировать</a>
+                    <form action="{{ url_for('inventory.category_delete', category_id=cat.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить категорию?')">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center">Нет категорий</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

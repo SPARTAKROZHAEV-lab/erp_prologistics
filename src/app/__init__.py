@@ -21,6 +21,8 @@ def create_app(config_name='default'):
     app.register_blueprint(admin_bp)
     from app.routes.hr import hr_bp
     app.register_blueprint(hr_bp)
+    from app.routes.inventory import inventory_bp
+    app.register_blueprint(inventory_bp)
 
 
     # Импортируем модели, чтобы они были зарегистрированы

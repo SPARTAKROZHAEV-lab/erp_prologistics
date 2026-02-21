@@ -34,3 +34,13 @@ def user_roles(user_id):
         return redirect(url_for('admin.users_list'))
 
     return render_template('admin/user_roles.html', user=user, all_roles=all_roles)
+
+@admin_bp.route('/impersonate/<int:user_id>')
+@login_required
+@admin_required
+def impersonate(user_id):
+    """Войти под другим пользователем (только для админа)"""
+    user = User.query.get_or_404(user_id)
+    login_user(user)
+    flash(f'Вы вошли как {user.email}', 'success')
+    return redirect(url_for('hello'))

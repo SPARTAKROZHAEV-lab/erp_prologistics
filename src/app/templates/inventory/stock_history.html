@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}История остатка{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>История остатка: {{ stock.product.name }} на складе {{ stock.warehouse.name }}</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Было</th>
+                <th>Стало</th>
+                <th>Изменение</th>
+                <th>Тип</th>
+                <th>Комментарий</th>
+                <th>Пользователь</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>{{ log.old_quantity }}</td>
+                <td>{{ log.new_quantity }}</td>
+                <td>{{ log.change }}</td>
+                <td>
+                    {% if log.movement %}
+                        {% if log.movement.movement_type == 'purchase' %}Приход
+                        {% elif log.movement.movement_type == 'sale' %}Продажа
+                        {% elif log.movement.movement_type == 'transfer' %}Перемещение
+                        {% elif log.movement.movement_type == 'adjustment' %}Корректировка
+                        {% endif %}
+                    {% else %}
+                        Корректировка
+                    {% endif %}
+                </td>
+                <td>{{ log.movement.comment if log.movement else '' }}</td>
+                <td>{{ log.user.username if log.user else log.user_id }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">Нет записей</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('inventory.stocks_list') }}" class="btn btn-secondary">Назад к остаткам</a>
+</div>
+{% endblock %}

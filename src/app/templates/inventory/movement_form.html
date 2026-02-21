@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Новое перемещение{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Перемещение товара</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="product_id" class="form-label">Товар *</label>
+            <select class="form-control" id="product_id" name="product_id" required>
+                <option value="">-- Выберите товар --</option>
+                {% for prod in products %}
+                    <option value="{{ prod.id }}" {% if selected_product == prod.id %}selected{% endif %}>{{ prod.name }} ({{ prod.sku }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="from_warehouse_id" class="form-label">Со склада (если перемещение)</label>
+            <select class="form-control" id="from_warehouse_id" name="from_warehouse_id">
+                <option value="">-- Приход от поставщика / без списания --</option>
+                {% for wh in warehouses %}
+                    <option value="{{ wh.id }}" {% if selected_from_warehouse == wh.id %}selected{% endif %}>{{ wh.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="to_warehouse_id" class="form-label">На склад *</label>
+            <select class="form-control" id="to_warehouse_id" name="to_warehouse_id" required>
+                <option value="">-- Выберите склад назначения --</option>
+                {% for wh in warehouses %}
+                    <option value="{{ wh.id }}">{{ wh.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="quantity" class="form-label">Количество *</label>
+            <input type="number" step="0.01" class="form-control" id="quantity" name="quantity" required>
+        </div>
+        <div class="mb-3">
+            <label for="comment" class="form-label">Комментарий</label>
+            <textarea class="form-control" id="comment" name="comment" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Выполнить перемещение</button>
+        <a href="{{ url_for('inventory.stocks_list') }}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}
