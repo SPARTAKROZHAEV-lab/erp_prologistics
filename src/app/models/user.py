@@ -40,4 +40,13 @@ class User(db.Model):
         return False
 
     def get_id(self):
+
+
         return str(self.id)
+
+    def has_role(self, role_name):
+        """
+        Проверяет, есть ли у пользователя роль с указанным именем.
+        Возвращает True или False.
+        """
+        return any(role.name == role_name for role in self.roles)

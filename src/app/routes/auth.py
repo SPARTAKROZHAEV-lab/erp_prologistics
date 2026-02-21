@@ -3,6 +3,7 @@ from ..forms import RegistrationForm
 from ..models import User
 from ..extensions import db
 from ..forms import RegistrationForm, LoginForm
+from app.decorators import admin_required
 import bcrypt
 from flask_login import login_user, logout_user, login_required, current_user
 
@@ -45,3 +46,11 @@ def logout():
     logout_user()
     flash('Вы вышли из системы', 'info')
     return redirect(url_for('hello'))
+
+@auth_bp.route('/admin-test')
+@admin_required
+def admin_test():
+    """
+    Тестовая страница, доступная только пользователям с ролью admin.
+    """
+    return "Поздравляю! Вы администратор и видите эту секретную страницу."
