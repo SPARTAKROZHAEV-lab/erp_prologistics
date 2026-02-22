@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if category %}Редактировать{% else %}Добавить{% endif %} категорию</h2>
+    <form method="post">
+        <div class="mb-3">
+            <label for="name" class="form-label">Название</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ category.name if category else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="type" class="form-label">Тип</label>
+            <select class="form-select" id="type" name="type" required>
+                <option value="income" {% if category and category.type == 'income' %}selected{% endif %}>Доход</option>
+                <option value="expense" {% if category and category.type == 'expense' %}selected{% endif %}>Расход</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ category.description if category else '' }}</textarea>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if not category or category.is_active %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">Активна</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{{ url_for('finance.categories_list') }}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

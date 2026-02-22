@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Платёж № {{ payment.id }}</h2>
+    <dl>
+        <dt>Счёт</dt>
+        <dd><a href="{{ url_for('finance.invoice_detail', id=payment.invoice.id) }}">{{ payment.invoice.number }}</a></dd>
+        <dt>Сумма</dt>
+        <dd>{{ payment.amount }}</dd>
+        <dt>Дата</dt>
+        <dd>{{ payment.payment_date.strftime('%d.%m.%Y %H:%M') }}</dd>
+        <dt>Способ</dt>
+        <dd>{{ payment.method }}</dd>
+        <dt>Номер документа</dt>
+        <dd>{{ payment.reference or '—' }}</dd>
+        <dt>Статус</dt>
+        <dd>{{ payment.status }}</dd>
+        <dt>Комментарий</dt>
+        <dd>{{ payment.comment or '—' }}</dd>
+    </dl>
+    <a href="{{ url_for('finance.payments') }}" class="btn btn-secondary">Назад к списку</a>
+</div>
+{% endblock %}

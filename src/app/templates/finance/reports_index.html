@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Финансовые отчёты</h2>
+    <div class="list-group">
+        <a href="{{ url_for('finance.report_cash_flow') }}" class="list-group-item list-group-item-action">Движение денежных средств</a>
+        <a href="{{ url_for('finance.report_profit_loss') }}" class="list-group-item list-group-item-action">Прибыли и убытки</a>
+        <a href="{{ url_for('finance.report_debtors') }}" class="list-group-item list-group-item-action">Дебиторская задолженность</a>
+    </div>
+</div>
+{% endblock %}

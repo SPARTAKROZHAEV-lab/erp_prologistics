@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Движение денежных средств</h2>
+    <form method="get" class="row g-3 mb-3">
+        <div class="col-md-3">
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Показать</button>
+        </div>
+    </form>
+
+    <!-- Здесь можно вставить график Chart.js -->
+    <canvas id="cashFlowChart" width="400" height="200"></canvas>
+
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Доход</th>
+                <th>Расход</th>
+                <th>Остаток</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in range(dates|length) %}
+            <tr>
+                <td>{{ dates[i] }}</td>
+                <td>{{ income_data[i] }}</td>
+                <td>{{ expense_data[i] }}</td>
+                <td>{{ balance_data[i] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var ctx = document.getElementById('cashFlowChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ dates | tojson }},
+            datasets: [
+                {
+                    label: 'Доход',
+                    data: {{ income_data | tojson }},
+                    borderColor: 'green',
+                    fill: false
+                },
+                {
+                    label: 'Расход',
+                    data: {{ expense_data | tojson }},
+                    borderColor: 'red',
+                    fill: false
+                },
+                {
+                    label: 'Остаток',
+                    data: {{ balance_data | tojson }},
+                    borderColor: 'blue',
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+{% endblock %}

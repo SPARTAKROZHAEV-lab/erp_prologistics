@@ -16,3 +16,6 @@ from .order import Order
 from .order_item import OrderItem
 from .order_history import OrderHistory
 from .transaction import Transaction
+from .invoice import Invoice
+from .payment import Payment
+from .transaction_category import TransactionCategory
