@@ -8,6 +8,7 @@ from datetime import datetime
 from decimal import Decimal
 import random
 import string
+from app.models.order_history import OrderHistory
 
 sales_bp = Blueprint('sales', __name__, url_prefix='/sales')
 
@@ -152,66 +153,91 @@ def order_change_status(order_id):
         return redirect(url_for('sales.order_detail', order_id=order.id))
 
     old_status = order.status
+    if old_status == new_status:
+        flash('Статус уже установлен', 'info')
+        return redirect(url_for('sales.order_detail', order_id=order.id))
 
     # Логика резервирования / списания
-    if new_status == 'processing' and old_status != 'processing':
-        # Резервируем товары
-        for item in order.items:
-            product = item.product
-            qty = item.quantity
-            # Резервируем со всех складов по очереди (упрощённо)
-            to_reserve = qty
-            stocks = Stock.query.filter_by(product_id=product.id).order_by(Stock.quantity.desc()).all()
-            for stock in stocks:
-                if to_reserve <= 0:
-                    break
-                available = stock.quantity - stock.reserved
-                if available > 0:
-                    reserve_qty = min(available, to_reserve)
-                    stock.reserved += reserve_qty
-                    to_reserve -= reserve_qty
-            if to_reserve > 0:
-                flash(f'Не удалось зарезервировать {item.quantity} товара {product.name}', 'danger')
-                db.session.rollback()
-                return redirect(url_for('sales.order_detail', order_id=order.id))
+    try:
+        if new_status == 'processing' and old_status != 'processing':
+            # Резервируем товары
+            for item in order.items:
+                product = item.product
+                qty = item.quantity
+                to_reserve = qty
+                stocks = Stock.query.filter_by(product_id=product.id).order_by(Stock.quantity.desc()).all()
+                for stock in stocks:
+                    if to_reserve <= 0:
+                        break
+                    available = stock.quantity - stock.reserved
+                    if available > 0:
+                        reserve_qty = min(available, to_reserve)
+                        stock.reserved += reserve_qty
+                        to_reserve -= reserve_qty
+                if to_reserve > 0:
+                    flash(f'Не удалось зарезервировать {item.quantity} товара {product.name}', 'danger')
+                    db.session.rollback()
+                    return redirect(url_for('sales.order_detail', order_id=order.id))
 
-    elif new_status == 'completed' and old_status != 'completed':
-        # Списываем товары (уменьшаем quantity и снимаем резерв)
-        for item in order.items:
-            product = item.product
-            qty = item.quantity
-            to_remove = qty
-            stocks = Stock.query.filter_by(product_id=product.id).order_by(Stock.quantity.desc()).all()
-            for stock in stocks:
-                if to_remove <= 0:
-                    break
-                remove_qty = min(stock.quantity, to_remove)
-                stock.quantity -= remove_qty
-                if stock.reserved >= remove_qty:
-                    stock.reserved -= remove_qty
-                else:
-                    stock.reserved = 0
-                to_remove -= remove_qty
-            if to_remove > 0:
-                flash(f'Ошибка списания товара {product.name}', 'danger')
-                db.session.rollback()
-                return redirect(url_for('sales.order_detail', order_id=order.id))
+        elif new_status == 'completed' and old_status != 'completed':
+            # Списываем товары (уменьшаем quantity и снимаем резерв)
+            for item in order.items:
+                product = item.product
+                qty = item.quantity
+                to_remove = qty
+                stocks = Stock.query.filter_by(product_id=product.id).order_by(Stock.quantity.desc()).all()
+                for stock in stocks:
+                    if to_remove <= 0:
+                        break
+                    remove_qty = min(stock.quantity, to_remove)
+                    stock.quantity -= remove_qty
+                    if stock.reserved >= remove_qty:
+                        stock.reserved -= remove_qty
+                    else:
+                        stock.reserved = 0
+                    to_remove -= remove_qty
+                if to_remove > 0:
+                    flash(f'Ошибка списания товара {product.name}', 'danger')
+                    db.session.rollback()
+                    return redirect(url_for('sales.order_detail', order_id=order.id))
 
-    elif new_status == 'cancelled' and old_status == 'processing':
-        # Снимаем резерв
-        for item in order.items:
-            product = item.product
-            qty = item.quantity
-            to_unreserve = qty
-            stocks = Stock.query.filter_by(product_id=product.id).all()
-            for stock in stocks:
-                if to_unreserve <= 0:
-                    break
-                unreserve_qty = min(stock.reserved, to_unreserve)
-                stock.reserved -= unreserve_qty
-                to_unreserve -= unreserve_qty
+        elif new_status == 'cancelled' and old_status == 'processing':
+            # Снимаем резерв
+            for item in order.items:
+                product = item.product
+                qty = item.quantity
+                to_unreserve = qty
+                stocks = Stock.query.filter_by(product_id=product.id).all()
+                for stock in stocks:
+                    if to_unreserve <= 0:
+                        break
+                    unreserve_qty = min(stock.reserved, to_unreserve)
+                    stock.reserved -= unreserve_qty
+                    to_unreserve -= unreserve_qty
 
-    order.status = new_status
-    db.session.commit()
-    flash(f'Статус заказа изменён на {new_status}', 'success')
-    return redirect(url_for('sales.order_detail', order_id=order.id))
+        # Меняем статус заказа
+        order.status = new_status
+
+        # Записываем историю
+        history = OrderHistory(
+            order_id=order.id,
+            old_status=old_status,
+            new_status=new_status,
+            changed_by=current_user.id,
+            comment=request.form.get('comment', '')
+        )
+        db.session.add(history)
+
+        db.session.commit()
+        flash(f'Статус заказа изменён на {new_status}', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при изменении статуса: {str(e)}', 'danger')
+
+    # Определяем, откуда пришёл запрос (список или детальная)
+    referrer = request.referrer
+    if referrer and '/sales/orders' in referrer:
+        return redirect(url_for('sales.orders_list'))
+    else:
+        return redirect(url_for('sales.order_detail', order_id=order.id))

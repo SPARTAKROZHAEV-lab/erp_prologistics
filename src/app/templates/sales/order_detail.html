@@ -60,6 +60,33 @@
         </tfoot>
     </table>
 
+    <!-- Блок истории заказа (добавлено) -->
+    <h3 class="mt-4">История заказа</h3>
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Старый статус</th>
+                <th>Новый статус</th>
+                <th>Кто изменил</th>
+                <th>Комментарий</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in order.history|sort(attribute='changed_at', reverse=True) %}
+            <tr>
+                <td>{{ h.changed_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>{{ h.old_status or '' }}</td>
+                <td>{{ h.new_status }}</td>
+                <td>{{ h.user.username if h.user else 'Система' }}</td>
+                <td>{{ h.comment }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center">Нет записей</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
     <div class="mt-3">
         <form method="POST" action="{{ url_for('sales.order_change_status', order_id=order.id) }}" style="display:inline;">
             <select name="status" class="form-select d-inline w-auto">
