@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Отчёт о прибылях и убытках</h2>
+    <form method="get" class="row g-3 mb-3">
+        <div class="col-md-3">
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Показать</button>
+        </div>
+    </form>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Доходы</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ income_total }} ₽</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-header">Расходы</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ expense_total }} ₽</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white {% if profit >= 0 %}bg-primary{% else %}bg-warning{% endif %} mb-3">
+                <div class="card-header">Прибыль</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ profit }} ₽</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h4>Доходы по категориям</h4>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Категория</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, amount in income_by_cat %}
+                    <tr>
+                        <td>{{ name }}</td>
+                        <td>{{ amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h4>Расходы по категориям</h4>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Категория</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, amount in expense_by_cat %}
+                    <tr>
+                        <td>{{ name }}</td>
+                        <td>{{ amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <a href="{{ url_for('finance.reports_index') }}" class="btn btn-secondary">Назад к отчётам</a>
+</div>
+{% endblock %}
