@@ -10,3 +10,7 @@ from .warehouse import Warehouse
 from .stock import Stock
 from .stock_movement import StockMovement
 from .stock_log import StockLog
+from .permission import Permission
+from .customer import Customer
+from .order import Order
+from .order_item import OrderItem

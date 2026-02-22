@@ -4,6 +4,10 @@ from flask_login import login_required
 from app.decorators import role_required
 from app.models import Category, Product, Warehouse, Stock
 from app.extensions import db
+from flask_login import current_user
+from app.models.stock_movement import StockMovement
+from app.models.stock_log import StockLog
+from decimal import Decimal
 
 inventory_bp = Blueprint('inventory', __name__, url_prefix='/inventory')
 
@@ -271,7 +275,7 @@ def movement_create():
         product_id = int(request.form['product_id'])
         from_warehouse_id = request.form.get('from_warehouse_id')
         to_warehouse_id = int(request.form['to_warehouse_id'])
-        quantity = float(request.form['quantity'])
+        quantity = Decimal(request.form['quantity'])
         comment = request.form.get('comment', '')
         
         if from_warehouse_id and int(from_warehouse_id) == to_warehouse_id:
@@ -358,7 +362,7 @@ def stock_history(stock_id):
 def stock_adjust():
     """Ручная корректировка остатка"""
     stock_id = request.form['stock_id']
-    new_quantity = float(request.form['quantity'])
+    new_quantity = Decimal(request.form['quantity'])
     stock = Stock.query.get_or_404(stock_id)
     stock.quantity = new_quantity
     db.session.commit()

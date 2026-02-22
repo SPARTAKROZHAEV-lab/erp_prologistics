@@ -1,10 +1,8 @@
 # Инициализация Flask приложения
-from flask import Flask
+from flask import Flask, render_template
 from .config import config
-from .extensions import db, migrate
-from .routes.auth import auth_bp
 from .extensions import db, migrate, login_manager
-
+from .routes.auth import auth_bp
 
 def create_app(config_name='default'):
     app = Flask(__name__)
@@ -23,13 +21,14 @@ def create_app(config_name='default'):
     app.register_blueprint(hr_bp)
     from app.routes.inventory import inventory_bp
     app.register_blueprint(inventory_bp)
-
+    from app.routes.sales import sales_bp
+    app.register_blueprint(sales_bp)
 
     # Импортируем модели, чтобы они были зарегистрированы
-    from .models import Test  # или from . import models
+    from .models import Test
 
     @app.route('/')
-    def hello():
-        return 'Hello, ERP Prologistics!'
+    def index():
+        return render_template('index.html')
 
     return app

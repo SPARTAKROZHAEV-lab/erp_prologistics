@@ -6,6 +6,8 @@ from app.models import Employee, Department, Position, User
 from app.extensions import db
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify
+from app.models.permission import Permission
+from app.models.role import Role
 
 
 hr_bp = Blueprint('hr', __name__, url_prefix='/hr')
@@ -238,3 +240,67 @@ def employee_delete(employee_id):
     db.session.commit()
     flash('Сотрудник удалён', 'success')
     return redirect(url_for('hr.employees_list'))
+
+@hr_bp.route('/roles')
+@login_required
+@role_required('admin', 'hr')
+def roles_list():
+    """Список ролей (доступно админу и HR)"""
+    roles = Role.query.all()
+    return render_template('hr/roles_list.html', roles=roles)
+
+@hr_bp.route('/roles/add', methods=['GET', 'POST'])
+@login_required
+@role_required('admin', 'hr')
+def role_add():
+    """Создание новой роли"""
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form.get('description', '')
+        if Role.query.filter_by(name=name).first():
+            flash('Роль с таким именем уже существует', 'danger')
+        else:
+            role = Role(name=name, description=description)
+            db.session.add(role)
+            db.session.commit()
+            flash('Роль создана', 'success')
+            return redirect(url_for('hr.roles_list'))
+    return render_template('hr/role_form.html')
+
+@hr_bp.route('/roles/<int:role_id>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('admin', 'hr')
+def role_edit(role_id):
+    """Редактирование роли и назначение разрешений"""
+    role = Role.query.get_or_404(role_id)
+    all_permissions = Permission.query.all()
+    
+    if request.method == 'POST':
+        role.name = request.form['name']
+        role.description = request.form.get('description', '')
+        # Обработка разрешений
+        selected_perms = request.form.getlist('permissions')
+        role.permissions = []
+        for perm_id in selected_perms:
+            perm = Permission.query.get(int(perm_id))
+            if perm:
+                role.permissions.append(perm)
+        db.session.commit()
+        flash('Роль обновлена', 'success')
+        return redirect(url_for('hr.roles_list'))
+    
+    return render_template('hr/role_form.html', role=role, permissions=all_permissions)
+
+@hr_bp.route('/roles/<int:role_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def role_delete(role_id):
+    """Удаление роли (только админ)"""
+    role = Role.query.get_or_404(role_id)
+    if role.name in ['admin', 'manager', 'hr', 'storekeeper', 'accountant', 'employee']:
+        flash('Нельзя удалить системную роль', 'danger')
+    else:
+        db.session.delete(role)
+        db.session.commit()
+        flash('Роль удалена', 'success')
+    return redirect(url_for('hr.roles_list'))

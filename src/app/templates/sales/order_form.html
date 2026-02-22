@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Создание заказа{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Создание заказа</h1>
+    <form method="POST" id="orderForm">
+        <div class="mb-3">
+            <label for="customer_id" class="form-label">Клиент *</label>
+            <select class="form-control" id="customer_id" name="customer_id" required>
+                <option value="">-- Выберите клиента --</option>
+                {% for customer in customers %}
+                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <h4>Товары</h4>
+        <table class="table" id="itemsTable">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Количество</th>
+                    <th>Цена</th>
+                    <th>Сумма</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="item-row-0">
+                    <td>
+                        <select class="form-control product-select" name="product_id[]" required>
+                            <option value="">-- Выберите товар --</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}" data-price="{{ product.price or 0 }}">{{ product.name }} ({{ product.sku }}) - доступно: {{ product.stocks|sum(attribute='available') }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" class="form-control quantity" name="quantity[]" value="1" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control price" readonly>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control item-total" readonly>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger remove-item" style="display:none;">Удалить</button>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3"></td>
+                    <td><strong>Итого: <span id="totalAmount">0.00</span></strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <button type="button" class="btn btn-sm btn-success" id="addItem">+ Добавить товар</button>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Создать заказ</button>
+            <a href="{{ url_for('sales.orders_list') }}" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let rowCount = 1;
+
+    // Функция обновления цены и суммы строки
+    function updateRow(row) {
+        const select = row.querySelector('.product-select');
+        const quantity = row.querySelector('.quantity');
+        const priceField = row.querySelector('.price');
+        const totalField = row.querySelector('.item-total');
+
+        if (select.value && quantity.value) {
+            const selectedOption = select.options[select.selectedIndex];
+            const price = parseFloat(selectedOption.dataset.price) || 0;
+            const qty = parseFloat(quantity.value) || 0;
+            const total = price * qty;
+
+            priceField.value = price.toFixed(2);
+            totalField.value = total.toFixed(2);
+        } else {
+            priceField.value = '';
+            totalField.value = '';
+        }
+        updateTotal();
+    }
+
+    // Обновление общей суммы
+    function updateTotal() {
+        let total = 0;
+        document.querySelectorAll('.item-total').forEach(field => {
+            total += parseFloat(field.value) || 0;
+        });
+        document.getElementById('totalAmount').textContent = total.toFixed(2);
+    }
+
+    // Добавление новой строки
+    document.getElementById('addItem').addEventListener('click', function() {
+        const tbody = document.querySelector('#itemsTable tbody');
+        const newRow = document.createElement('tr');
+        newRow.id = `item-row-${rowCount}`;
+        newRow.innerHTML = `
+            <td>
+                <select class="form-control product-select" name="product_id[]" required>
+                    <option value="">-- Выберите товар --</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}" data-price="{{ product.price or 0 }}">{{ product.name }} ({{ product.sku }}) - доступно: {{ product.stocks|sum(attribute='available') }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control quantity" name="quantity[]" value="1" required>
+            </td>
+            <td>
+                <input type="text" class="form-control price" readonly>
+            </td>
+            <td>
+                <input type="text" class="form-control item-total" readonly>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger remove-item">Удалить</button>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+        rowCount++;
+
+        // Привязка событий к новой строке
+        attachEvents(newRow);
+    });
+
+    // Привязка событий к строке
+    function attachEvents(row) {
+        row.querySelector('.product-select').addEventListener('change', function() { updateRow(row); });
+        row.querySelector('.quantity').addEventListener('input', function() { updateRow(row); });
+        row.querySelector('.remove-item').addEventListener('click', function() {
+            row.remove();
+            updateTotal();
+        });
+    }
+
+    // Привязка к первой строке
+    const firstRow = document.getElementById('item-row-0');
+    attachEvents(firstRow);
+    // Скрыть кнопку удаления у первой строки (если она одна)
+    firstRow.querySelector('.remove-item').style.display = 'none';
+});
+</script>
+{% endblock %}

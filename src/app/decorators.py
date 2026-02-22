@@ -1,6 +1,4 @@
 # src/app/decorators.py
-# Декораторы для проверки прав доступа на основе ролей.
-
 from functools import wraps
 from flask import flash, redirect, url_for, abort
 from flask_login import current_user
@@ -8,6 +6,7 @@ from flask_login import current_user
 def role_required(*roles):
     """
     Декоратор, требующий у пользователя хотя бы одну из указанных ролей.
+    При отсутствии прав – редирект на главную с сообщением.
     """
     def decorator(f):
         @wraps(f)
@@ -21,11 +20,10 @@ def role_required(*roles):
                 return f(*args, **kwargs)
             else:
                 flash('У вас недостаточно прав для доступа к этой странице.', 'danger')
-                abort(403)
+                return redirect(url_for('index'))  # Вместо abort(403)
         return decorated_function
     return decorator
 
-# Частные случаи для конкретных ролей
 def admin_required(f):
     return role_required('admin')(f)
 
