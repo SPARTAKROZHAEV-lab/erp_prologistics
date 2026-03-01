@@ -1,32 +1,18 @@
-# Python
-__pycache__/
-*.py[cod]
-*.so
-.Python
-env/
-venv/
-.env
-*.log
-*.pot
+# Temporary files
 *.pyc
-instance/
-.webassets-cache
+__pycache__/
+.coverage
+htmlcov/
+.tox/
 
-# Flask
-instance/
-.flaskenv
+# Database dumps
+*.sql
+*.bak
+*.backup
 
-# Docker
-*.pid
-docker-compose.override.yml
+# Environment variables
+.env
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Project specific
-/src/app/static/uploads/
