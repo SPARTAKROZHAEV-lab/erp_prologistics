@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Продажи по категориям товаров</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.category_sales_csv') }}?{{ request.query_string.decode() }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">Выручка по категориям</div>
+                <div class="card-body">
+                    <canvas id="categoryChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">Детализация</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Категория</th>
+                                <th>Кол-во</th>
+                                <th>Выручка</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in range(categories|length) %}
+                            <tr>
+                                <td>{{ categories[i] }}</td>
+                                <td>{{ quantities[i] }}</td>
+                                <td>{{ "{:,.0f}".format(revenues[i]) }} ₽</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ categories | tojson }},
+            datasets: [{
+                label: 'Выручка, ₽',
+                data: {{ revenues | tojson }},
+                backgroundColor: '#FF9800'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}

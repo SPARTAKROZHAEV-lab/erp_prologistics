@@ -9,11 +9,15 @@
                 <dt>Контрагент</dt>
                 <dd>{{ invoice.customer.name }}</dd>
                 <dt>Дата выставления</dt>
-                <dd>{{ invoice.issue_date }}</dd>
+                <dd>{{ invoice.issue_date.strftime('%d.%m.%Y') }}</dd>
                 <dt>Срок оплаты</dt>
-                <dd>{{ invoice.due_date or 'не указан' }}</dd>
+                <dd>{{ invoice.due_date.strftime('%d.%m.%Y') if invoice.due_date else 'не указан' }}</dd>
                 <dt>Сумма</dt>
                 <dd>{{ invoice.total_amount }} {{ invoice.currency if invoice.currency else 'RUB' }}</dd>
+                <dt>Оплачено</dt>
+                <dd>{{ total_paid }}</dd>
+                <dt>Остаток</dt>
+                <dd>{{ invoice.total_amount - total_paid }}</dd>
                 <dt>Статус</dt>
                 <dd>{{ invoice.status }}</dd>
                 <dt>Описание</dt>
@@ -43,7 +47,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <p><strong>Оплачено:</strong> {{ total_paid }}</p>
         </div>
     </div>
     <a href="{{ url_for('finance.invoices') }}" class="btn btn-secondary">Назад к списку</a>

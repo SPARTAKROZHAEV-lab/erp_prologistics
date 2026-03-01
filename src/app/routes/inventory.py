@@ -1,8 +1,8 @@
-# app/routes/inventory.py
 from flask import Blueprint, render_template, flash, redirect, url_for, request
 from flask_login import login_required
 from app.decorators import role_required
-from app.models import Category, Product, Warehouse, Stock
+from app.models import Category, Product, Warehouse, Stock, Unit, Currency
+from app.models.customer import Customer
 from app.extensions import db
 from flask_login import current_user
 from app.models.stock_movement import StockMovement
@@ -58,7 +58,17 @@ def category_edit(category_id):
     categories = Category.query.all()
     return render_template('inventory/category_form.html', category=category, categories=categories)
 
-@inventory_bp.route('/categories/<int:category_id>/delete', methods=['POST'])
+@inventory_bp.route('/products/<int:product_id>/delete', methods=['POST'], endpoint='product_delete')
+@login_required
+@role_required('admin')
+def product_delete(product_id):
+    product = Product.query.get_or_404(product_id)
+    db.session.delete(product)
+    db.session.commit()
+    flash('Товар удалён', 'success')
+    return redirect(url_for('inventory.products_list'))
+
+@inventory_bp.route('/categories/<int:category_id>/delete', methods=['POST'], endpoint='category_delete')
 @login_required
 @role_required('admin')
 def category_delete(category_id):
@@ -99,25 +109,49 @@ def product_add():
         name = request.form['name']
         description = request.form.get('description')
         price = request.form.get('price')
+        purchase_price = request.form.get('purchase_price')
         cost = request.form.get('cost')
         category_id = request.form.get('category_id') or None
         if category_id:
             category_id = int(category_id)
         barcode = request.form.get('barcode')
-        unit = request.form.get('unit', 'шт')
+        
+        unit_id = request.form.get('unit_id') or None
+        if unit_id:
+            unit_id = int(unit_id)
+        manufacturer_id = request.form.get('manufacturer_id') or None
+        if manufacturer_id:
+            manufacturer_id = int(manufacturer_id)
+        min_stock = request.form.get('min_stock') or None
+        max_stock = request.form.get('max_stock') or None
+        currency_id = request.form.get('currency_id') or None
+        if currency_id:
+            currency_id = int(currency_id)
         
         product = Product(
             sku=sku,
             name=name,
             description=description,
             price=float(price) if price else None,
+            purchase_price=float(purchase_price) if purchase_price else None,
             cost=float(cost) if cost else None,
             category_id=category_id,
             barcode=barcode,
-            unit=unit
+            
+            unit_id=unit_id,
+            manufacturer_id=manufacturer_id,
+            min_stock=float(min_stock) if min_stock else None,
+            max_stock=float(max_stock) if max_stock else None,
+            currency_id=currency_id
         )
         db.session.add(product)
-        db.session.flush()  # чтобы получить id
+        db.session.flush()
+
+        # Обработка поставщиков (из Customer)
+        supplier_ids = request.form.getlist('suppliers')
+        if supplier_ids:
+            suppliers = Customer.query.filter(Customer.id.in_(supplier_ids)).all()
+            product.suppliers.extend(suppliers)
 
         # Создаём остатки на всех активных складах
         warehouses = Warehouse.query.filter_by(is_active=True).all()
@@ -130,8 +164,20 @@ def product_add():
         return redirect(url_for('inventory.products_list'))
 
     categories = Category.query.all()
+    units = Unit.query.filter_by(is_active=True).all()
+    # Производители: все Customer с is_manufacturer=True
+    manufacturers = Customer.query.filter_by(is_manufacturer=True, is_active=True).all()
+    # Поставщики: все Customer с is_supplier=True
+    suppliers = Customer.query.filter_by(is_supplier=True, is_active=True).all()
+    currencies = Currency.query.filter_by(is_active=True).all()
     warehouses = Warehouse.query.filter_by(is_active=True).all()
-    return render_template('inventory/product_form.html', categories=categories, warehouses=warehouses)
+    return render_template('inventory/product_form.html',
+                           categories=categories,
+                           units=units,
+                           manufacturers=manufacturers,
+                           suppliers=suppliers,
+                           currencies=currencies,
+                           warehouses=warehouses)
 
 @inventory_bp.route('/products/<int:product_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -144,32 +190,54 @@ def product_edit(product_id):
         product.name = request.form['name']
         product.description = request.form.get('description')
         product.price = float(request.form['price']) if request.form.get('price') else None
+        product.purchase_price = float(request.form['purchase_price']) if request.form.get('purchase_price') else None
         product.cost = float(request.form['cost']) if request.form.get('cost') else None
         category_id = request.form.get('category_id') or None
         if category_id:
             category_id = int(category_id)
         product.category_id = category_id
         product.barcode = request.form.get('barcode')
-        product.unit = request.form.get('unit', 'шт')
+       
+        unit_id = request.form.get('unit_id') or None
+        if unit_id:
+            unit_id = int(unit_id)
+        product.unit_id = unit_id
+        manufacturer_id = request.form.get('manufacturer_id') or None
+        if manufacturer_id:
+            manufacturer_id = int(manufacturer_id)
+        product.manufacturer_id = manufacturer_id
+        product.min_stock = float(request.form['min_stock']) if request.form.get('min_stock') else None
+        product.max_stock = float(request.form['max_stock']) if request.form.get('max_stock') else None
+        currency_id = request.form.get('currency_id') or None
+        if currency_id:
+            currency_id = int(currency_id)
+        product.currency_id = currency_id
         product.is_active = 'is_active' in request.form
+
+        # Обновление поставщиков
+        supplier_ids = request.form.getlist('suppliers')
+        # Очищаем текущий список
+        product.suppliers = []
+        if supplier_ids:
+            suppliers = Customer.query.filter(Customer.id.in_(supplier_ids)).all()
+            product.suppliers.extend(suppliers)
 
         db.session.commit()
         flash('Товар обновлён', 'success')
         return redirect(url_for('inventory.product_detail', product_id=product.id))
 
     categories = Category.query.all()
-    return render_template('inventory/product_form.html', product=product, categories=categories)
-
-@inventory_bp.route('/products/<int:product_id>/delete', methods=['POST'])
-@login_required
-@role_required('admin')
-def product_delete(product_id):
-    """Удаление товара"""
-    product = Product.query.get_or_404(product_id)
-    db.session.delete(product)
-    db.session.commit()
-    flash('Товар удалён', 'success')
-    return redirect(url_for('inventory.products_list'))
+    units = Unit.query.filter_by(is_active=True).all()
+    manufacturers = Customer.query.filter_by(is_manufacturer=True, is_active=True).all()
+    suppliers = Customer.query.filter_by(is_supplier=True, is_active=True).all()
+    currencies = Currency.query.filter_by(is_active=True).all()
+    return render_template('inventory/product_form.html',
+                           product=product,
+                           categories=categories,
+                           units=units,
+                           manufacturers=manufacturers,
+                           suppliers=suppliers,
+                           currencies=currencies)
 
 # ==================== Склады ====================
 @inventory_bp.route('/warehouses')
@@ -239,9 +307,8 @@ def warehouse_delete(warehouse_id):
 def stocks_list():
     """Просмотр остатков с фильтрацией и пагинацией"""
     page = request.args.get('page', 1, type=int)
-    per_page = 20  # записей на странице
+    per_page = 20
     
-    # Фильтры
     product_id = request.args.get('product_id', type=int)
     warehouse_id = request.args.get('warehouse_id', type=int)
     
@@ -252,10 +319,8 @@ def stocks_list():
     if warehouse_id:
         query = query.filter_by(warehouse_id=warehouse_id)
     
-    # Пагинация
     stocks_paginated = query.paginate(page=page, per_page=per_page, error_out=False)
     
-    # Для фильтров
     products = Product.query.filter_by(is_active=True).all()
     warehouses = Warehouse.query.filter_by(is_active=True).all()
     
@@ -368,3 +433,62 @@ def stock_adjust():
     db.session.commit()
     flash('Остаток скорректирован', 'success')
     return redirect(url_for('inventory.stocks_list'))
+
+@inventory_bp.route('/purchase/create', methods=['GET', 'POST'])
+@login_required
+@role_required('admin', 'manager', 'storekeeper')
+def purchase_create():
+    """Приход товара от поставщика"""
+    if request.method == 'POST':
+        product_id = int(request.form['product_id'])
+        to_warehouse_id = int(request.form['to_warehouse_id'])
+        supplier_id = request.form.get('supplier_id')  # опционально
+        quantity = Decimal(request.form['quantity'])
+        comment = request.form.get('comment', '')
+        price = request.form.get('price')  # цена закупки (опционально)
+
+        to_stock = Stock.query.filter_by(product_id=product_id, warehouse_id=to_warehouse_id).first()
+        if not to_stock:
+            to_stock = Stock(product_id=product_id, warehouse_id=to_warehouse_id, quantity=0)
+            db.session.add(to_stock)
+            db.session.flush()
+
+        movement = StockMovement(
+            product_id=product_id,
+            from_warehouse_id=None,
+            to_warehouse_id=to_warehouse_id,
+            quantity=quantity,
+            movement_type='purchase',
+            created_by=current_user.id,
+            comment=comment
+        )
+        db.session.add(movement)
+        db.session.flush()
+
+        old_qty = to_stock.quantity
+        to_stock.quantity += quantity
+
+        log = StockLog(
+            stock_id=to_stock.id,
+            old_quantity=old_qty,
+            new_quantity=to_stock.quantity,
+            change=quantity,
+            movement_id=movement.id,
+            created_by=current_user.id,
+            comment=comment or f"Приход от {'поставщика' + (' ID ' + str(supplier_id) if supplier_id else '')}"
+        )
+        db.session.add(log)
+
+        db.session.commit()
+        flash('Приход выполнен', 'success')
+        return redirect(url_for('inventory.stocks_list'))
+
+    product_id = request.args.get('product_id', type=int)
+    products = Product.query.filter_by(is_active=True).all()
+    warehouses = Warehouse.query.filter_by(is_active=True).all()
+    suppliers = Customer.query.filter_by(is_supplier=True, is_active=True).all()
+    return render_template('inventory/purchase_form.html',
+                          products=products,
+                          warehouses=warehouses,
+                          suppliers=suppliers,
+                          selected_product=product_id)

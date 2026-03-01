@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Динамика продаж</h1>
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-auto">
+            <label for="days" class="col-form-label">Количество дней:</label>
+        </div>
+        <div class="col-auto">
+            <input type="number" class="form-control" id="days" name="days" value="{{ days }}" min="1" max="365">
+        </div>
+        <div class="col-auto">
+            <label for="start_date" class="col-form-label">с</label>
+        </div>
+        <div class="col-auto">
+            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+        </div>
+        <div class="col-auto">
+            <label for="end_date" class="col-form-label">по</label>
+        </div>
+        <div class="col-auto">
+            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('analytics.sales_dynamics_csv') }}?{{ request.query_string.decode() }}" class="btn btn-success">Экспорт CSV</a>
+        </div>
+    </form>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Всего за период: {{ "{:,.0f}".format(total_revenue) }} ₽</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="salesChart" style="max-height: 400px;"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ dates | tojson }},
+            datasets: [{
+                label: 'Выручка, ₽',
+                data: {{ totals | tojson }},
+                borderColor: '#FF5252',
+                backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                tension: 0.2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}

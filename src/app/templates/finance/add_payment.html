@@ -3,10 +3,12 @@
 {% block content %}
 <div class="container mt-4">
     <h2>Добавить платёж по счёту № {{ invoice.number }}</h2>
-    <form method="post">
+    <p><strong>Остаток к оплате:</strong> {{ remaining }}</p>
+    <form method="post" id="paymentForm">
         <div class="mb-3">
             <label for="amount" class="form-label">Сумма</label>
             <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+            <div id="amountWarning" class="text-danger" style="display: none;">Внимание: сумма превышает остаток!</div>
         </div>
         <div class="mb-3">
             <label for="payment_date" class="form-label">Дата и время платежа</label>
@@ -32,7 +34,6 @@
                 <option value="completed" selected>Проведён</option>
                 <option value="failed">Ошибка</option>
             </select>
-            <div class="form-text">Если выбран статус "Проведён", автоматически создаётся финансовая транзакция и обновляется статус счёта.</div>
         </div>
         <div class="mb-3">
             <label for="comment" class="form-label">Комментарий</label>
@@ -42,4 +43,19 @@
         <a href="{{ url_for('finance.invoice_detail', id=invoice.id) }}" class="btn btn-secondary">Отмена</a>
     </form>
 </div>
+
+<script>
+    const amountInput = document.getElementById('amount');
+    const amountWarning = document.getElementById('amountWarning');
+    const remaining = {{ remaining }};
+
+    amountInput.addEventListener('input', function() {
+        const value = parseFloat(this.value) || 0;
+        if (value > remaining) {
+            amountWarning.style.display = 'block';
+        } else {
+            amountWarning.style.display = 'none';
+        }
+    });
+</script>
 {% endblock %}

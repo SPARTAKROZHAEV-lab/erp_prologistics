@@ -15,7 +15,7 @@ class StockMovement(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     comment = db.Column(db.Text, nullable=True)
     
-    product = db.relationship('Product')
+    product = db.relationship('Product', back_populates='movements')
     from_warehouse = db.relationship('Warehouse', foreign_keys=[from_warehouse_id])
     to_warehouse = db.relationship('Warehouse', foreign_keys=[to_warehouse_id])
     user = db.relationship('User')

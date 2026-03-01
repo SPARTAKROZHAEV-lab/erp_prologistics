@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Рентабельность по категориям</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.profit_margin_by_category_csv') }}?{{ request.query_string.decode() }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Категория</th>
+                <th>Выручка</th>
+                <th>Себестоимость</th>
+                <th>Прибыль</th>
+                <th>Маржа, %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.category }}</td>
+                <td>{{ "{:,.0f}".format(row.revenue) }} ₽</td>
+                <td>{{ "{:,.0f}".format(row.cost) }} ₽</td>
+                <td>{{ "{:,.0f}".format(row.profit) }} ₽</td>
+                <td>{{ row.margin }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

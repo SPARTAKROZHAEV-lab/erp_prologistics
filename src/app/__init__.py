@@ -17,15 +17,19 @@ def create_app(config_name='default'):
     app.register_blueprint(auth_bp)
     from app.routes.admin import admin_bp
     app.register_blueprint(admin_bp)
+    from .routes.finance import finance_bp
+    app.register_blueprint(finance_bp)
     from app.routes.hr import hr_bp
     app.register_blueprint(hr_bp)
     from app.routes.inventory import inventory_bp
     app.register_blueprint(inventory_bp)
     from app.routes.sales import sales_bp
     app.register_blueprint(sales_bp)
+    from app.routes.analytics import analytics_bp
+    app.register_blueprint(analytics_bp)
 
-    # Импортируем модели, чтобы они были зарегистрированы
-    from .models import Test
+
+
 
     @app.route('/')
     def index():

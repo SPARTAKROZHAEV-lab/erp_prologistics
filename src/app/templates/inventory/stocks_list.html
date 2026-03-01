@@ -1,98 +1,107 @@
 {% extends "base.html" %}
 
-{% block title %}Остатки товаров{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
-    <h1>Остатки товаров</h1>
-    
-    <!-- Фильтры -->
-    <form method="GET" class="row g-3 mb-3">
+    <h2>Остатки</h2>
+    <form method="get" class="row g-3 mb-3">
         <div class="col-md-4">
-            <label for="product_id" class="form-label">Товар</label>
-            <select class="form-control" id="product_id" name="product_id">
-                <option value="">-- Все товары --</option>
-                {% for prod in products %}
-                    <option value="{{ prod.id }}" {% if selected_product == prod.id %}selected{% endif %}>{{ prod.name }} ({{ prod.sku }})</option>
+            <select name="product_id" class="form-select">
+                <option value="">Все товары</option>
+                {% for p in products %}
+                <option value="{{ p.id }}" {% if selected_product == p.id %}selected{% endif %}>{{ p.name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-4">
-            <label for="warehouse_id" class="form-label">Склад</label>
-            <select class="form-control" id="warehouse_id" name="warehouse_id">
-                <option value="">-- Все склады --</option>
-                {% for wh in warehouses %}
-                    <option value="{{ wh.id }}" {% if selected_warehouse == wh.id %}selected{% endif %}>{{ wh.name }}</option>
+            <select name="warehouse_id" class="form-select">
+                <option value="">Все склады</option>
+                {% for w in warehouses %}
+                <option value="{{ w.id }}" {% if selected_warehouse == w.id %}selected{% endif %}>{{ w.name }}</option>
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary me-2">Применить</button>
-            <a href="{{ url_for('inventory.stocks_list') }}" class="btn btn-secondary">Сбросить</a>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary">Применить</button>
+            <a href="{{ url_for('inventory.stocks_list') }}" class="btn btn-secondary">Сброс</a>
         </div>
     </form>
-    
-    <a href="{{ url_for('inventory.movement_create') }}" class="btn btn-success mb-3">Новое перемещение</a>
-    
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Товар</th>
-                <th>Склад</th>
-                <th>Количество</th>
-                <th>Резерв</th>
-                <th>Доступно</th>
-                <th>Мин. остаток</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stock in stocks.items %}
-            <tr>
-                <td>{{ stock.product.name }} ({{ stock.product.sku }})</td>
-                <td>{{ stock.warehouse.name }}</td>
-                <td>{{ stock.quantity }}</td>
-                <td>{{ stock.reserved }}</td>
-                <td>{{ stock.available }}</td>
-                <td>{{ stock.min_stock }}</td>
-                <td>
-                    <a href="{{ url_for('inventory.movement_create', product_id=stock.product_id, from_warehouse_id=stock.warehouse_id) }}" class="btn btn-sm btn-primary">Переместить</a>
-                    <a href="{{ url_for('inventory.stock_history', stock_id=stock.id) }}" class="btn btn-sm btn-info">История</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="7" class="text-center">Нет остатков</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Склад</th>
+                    <th>Количество</th>
+                    <th>Зарезервировано</th>
+                    <th>Доступно</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in stocks.items %}
+                <tr>
+                    <td>{{ stock.product.name }}</td>
+                    <td>{{ stock.warehouse.name }}</td>
+                    <td>{{ stock.quantity }}</td>
+                    <td>{{ stock.reserved }}</td>
+                    <td>{{ stock.available }}</td>
+                    <td>
+                        <a href="{{ url_for('inventory.stock_history', stock_id=stock.id) }}" class="btn btn-sm btn-info" title="История">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                        {% if current_user.has_role('admin') or current_user.has_role('storekeeper') %}
+                        <button class="btn btn-sm btn-warning" onclick="adjustStock({{ stock.id }}, {{ stock.quantity }})" title="Корректировка">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center">Нет остатков</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <!-- Пагинация -->
-    <nav aria-label="Page navigation">
+    <nav>
         <ul class="pagination">
             {% if stocks.has_prev %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('inventory.stocks_list', page=stocks.prev_num, product_id=selected_product, warehouse_id=selected_warehouse) }}">Предыдущая</a></li>
-            {% else %}
-                <li class="page-item disabled"><span class="page-link">Предыдущая</span></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('inventory.stocks_list', page=stocks.prev_num, product_id=selected_product, warehouse_id=selected_warehouse) }}">Назад</a></li>
             {% endif %}
-            
-            {% for page_num in stocks.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if page_num %}
-                    {% if page_num == stocks.page %}
-                        <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
-                    {% else %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('inventory.stocks_list', page=page_num, product_id=selected_product, warehouse_id=selected_warehouse) }}">{{ page_num }}</a></li>
-                    {% endif %}
+            {% for p in stocks.iter_pages() %}
+                {% if p %}
+                <li class="page-item {% if p == stocks.page %}active{% endif %}"><a class="page-link" href="{{ url_for('inventory.stocks_list', page=p, product_id=selected_product, warehouse_id=selected_warehouse) }}">{{ p }}</a></li>
                 {% else %}
-                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                <li class="page-item disabled"><span class="page-link">...</span></li>
                 {% endif %}
             {% endfor %}
-            
             {% if stocks.has_next %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('inventory.stocks_list', page=stocks.next_num, product_id=selected_product, warehouse_id=selected_warehouse) }}">Следующая</a></li>
-            {% else %}
-                <li class="page-item disabled"><span class="page-link">Следующая</span></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for('inventory.stocks_list', page=stocks.next_num, product_id=selected_product, warehouse_id=selected_warehouse) }}">Вперёд</a></li>
             {% endif %}
         </ul>
     </nav>
 </div>
+
+<script>
+function adjustStock(stockId, currentQty) {
+    let newQty = prompt('Введите новое количество', currentQty);
+    if (newQty !== null) {
+        let form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('inventory.stock_adjust') }}";
+        let input1 = document.createElement('input');
+        input1.name = 'stock_id';
+        input1.value = stockId;
+        let input2 = document.createElement('input');
+        input2.name = 'quantity';
+        input2.value = newQty;
+        form.appendChild(input1);
+        form.appendChild(input2);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}

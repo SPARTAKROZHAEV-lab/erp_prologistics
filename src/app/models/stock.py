@@ -11,7 +11,7 @@ class Stock(db.Model):
     min_stock = db.Column(db.Numeric(10, 2), default=0)
     max_stock = db.Column(db.Numeric(10, 2), nullable=True)
     
-    product = db.relationship('Product', backref='stocks')
+    product = db.relationship('Product', back_populates='stocks')
     warehouse = db.relationship('Warehouse', backref='stocks')
     
     __table_args__ = (db.UniqueConstraint('product_id', 'warehouse_id', name='unique_product_warehouse'),)

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Оборачиваемость складов</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.warehouse_turnover_csv') }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Склад</th>
+                <th>Стоимость остатков</th>
+                <th>Продажи (кол-во за 30 дн.)</th>
+                <th>Продажи (сумма за 30 дн.)</th>
+                <th>Оборачиваемость (раз)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.warehouse }}</td>
+                <td>{{ "{:,.0f}".format(row.stock_value) }} ₽</td>
+                <td>{{ row.sales_qty }}</td>
+                <td>{{ "{:,.0f}".format(row.sales_amount) }} ₽</td>
+                <td>{{ row.turnover_ratio }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

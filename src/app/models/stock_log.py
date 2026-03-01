@@ -11,6 +11,7 @@ class StockLog(db.Model):
     change = db.Column(db.Numeric(10, 2))  # new - old
     movement_id = db.Column(db.Integer, db.ForeignKey('stock_movements.id'), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    comment = db.Column(db.Text, nullable=True)  # <-- добавлено
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     stock = db.relationship('Stock')

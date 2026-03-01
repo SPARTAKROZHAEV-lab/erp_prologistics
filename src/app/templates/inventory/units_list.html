@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Единицы измерения</h2>
+    <a href="{{ url_for('inventory.unit_add') }}" class="btn btn-primary mb-3">Добавить единицу</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Код</th>
+                <th>Описание</th>
+                <th>Активна</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for unit in units %}
+            <tr>
+                <td>{{ unit.name }}</td>
+                <td>{{ unit.code }}</td>
+                <td>{{ unit.description or '—' }}</td>
+                <td>{% if unit.is_active %}Да{% else %}Нет{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('inventory.unit_edit', id=unit.id) }}" class="btn btn-sm btn-warning">Ред.</a>
+                    <form action="{{ url_for('inventory.unit_delete', id=unit.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить?')">Уд.</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

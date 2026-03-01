@@ -1,39 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Склады{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
-    <h1>Склады</h1>
-    <a href="{{ url_for('inventory.warehouse_add') }}" class="btn btn-primary mb-3">Добавить склад</a>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Расположение</th>
-                <th>Активен</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for wh in warehouses %}
-            <tr>
-                <td>{{ wh.id }}</td>
-                <td>{{ wh.name }}</td>
-                <td>{{ wh.location }}</td>
-                <td>{% if wh.is_active %}Да{% else %}Нет{% endif %}</td>
-                <td>
-                    <a href="{{ url_for('inventory.warehouse_edit', warehouse_id=wh.id) }}" class="btn btn-sm btn-warning">Редактировать</a>
-                    <form action="{{ url_for('inventory.warehouse_delete', warehouse_id=wh.id) }}" method="POST" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить склад?')">Удалить</button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5" class="text-center">Нет складов</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h2>Склады</h2>
+    <a href="{{ url_for('inventory.warehouse_add') }}" class="btn btn-primary mb-3">
+        <i class="bi bi-plus-circle"></i> Добавить склад
+    </a>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Расположение</th>
+                    <th>Активен</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for wh in warehouses %}
+                <tr>
+                    <td>{{ wh.name }}</td>
+                    <td>{{ wh.location or '' }}</td>
+                    <td>{% if wh.is_active %}Да{% else %}Нет{% endif %}</td>
+                    <td>
+                        <a href="{{ url_for('inventory.warehouse_edit', warehouse_id=wh.id) }}" class="btn btn-sm btn-warning" title="Редактировать">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('inventory.warehouse_delete', warehouse_id=wh.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить склад?')" title="Удалить">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center">Нет складов</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

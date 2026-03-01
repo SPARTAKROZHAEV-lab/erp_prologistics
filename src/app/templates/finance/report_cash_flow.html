@@ -15,7 +15,6 @@
         </div>
     </form>
 
-    <!-- Здесь можно вставить график Chart.js -->
     <canvas id="cashFlowChart" width="400" height="200"></canvas>
 
     <table class="table mt-4">
@@ -38,6 +37,7 @@
             {% endfor %}
         </tbody>
     </table>
+    <a href="{{ url_for('finance.reports_index') }}" class="btn btn-secondary">Назад к отчётам</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -48,32 +48,12 @@
         data: {
             labels: {{ dates | tojson }},
             datasets: [
-                {
-                    label: 'Доход',
-                    data: {{ income_data | tojson }},
-                    borderColor: 'green',
-                    fill: false
-                },
-                {
-                    label: 'Расход',
-                    data: {{ expense_data | tojson }},
-                    borderColor: 'red',
-                    fill: false
-                },
-                {
-                    label: 'Остаток',
-                    data: {{ balance_data | tojson }},
-                    borderColor: 'blue',
-                    fill: false
-                }
+                { label: 'Доход', data: {{ income_data | tojson }}, borderColor: 'green', fill: false },
+                { label: 'Расход', data: {{ expense_data | tojson }}, borderColor: 'red', fill: false },
+                { label: 'Остаток', data: {{ balance_data | tojson }}, borderColor: 'blue', fill: false }
             ]
         },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
 </script>
 {% endblock %}

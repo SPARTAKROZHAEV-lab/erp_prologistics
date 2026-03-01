@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-4">
     <h2>{% if transaction %}Редактировать{% else %}Добавить{% endif %} транзакцию</h2>
-    <form method="post">
+    <form method="post" id="transactionForm">
         <div class="mb-3">
             <label for="type" class="form-label">Тип</label>
             <select class="form-select" id="type" name="type" required>
@@ -36,24 +36,26 @@
             <label for="description" class="form-label">Описание</label>
             <input type="text" class="form-control" id="description" name="description" value="{{ transaction.description if transaction else '' }}">
         </div>
-        <div class="mb-3">
-            <label for="customer_id" class="form-label">Контрагент</label>
-            <select class="form-select" id="customer_id" name="customer_id">
-                <option value="">-- Не выбрано --</option>
-                {% for cust in customers %}
-                <option value="{{ cust.id }}" {% if transaction and transaction.customer_id == cust.id %}selected{% endif %}>{{ cust.name }}</option>
-                {% endfor %}
-            </select>
+        
+        <!-- Блок выбора контрагента с поиском (как в продажах) -->
+        <div class="mb-3 position-relative">
+            <label for="customer_search" class="form-label">Контрагент</label>
+            <input type="text" class="form-control" id="customer_search" placeholder="Введите название, email или телефон..." autocomplete="off" 
+                   value="{{ transaction.customer.name if transaction and transaction.customer else '' }}">
+            <input type="hidden" id="customer_id" name="customer_id" value="{{ transaction.customer_id if transaction else '' }}">
+            <div id="customer_results" class="list-group position-absolute w-100" style="z-index: 1000; max-height: 200px; overflow-y: auto; display: none;"></div>
         </div>
-        <div class="mb-3">
-            <label for="order_id" class="form-label">Заказ</label>
-            <select class="form-select" id="order_id" name="order_id">
-                <option value="">-- Не выбран --</option>
-                {% for order in orders %}
-                <option value="{{ order.id }}" {% if transaction and transaction.order_id == order.id %}selected{% endif %}>Заказ №{{ order.id }}</option>
-                {% endfor %}
-            </select>
+
+        <!-- Блок выбора заказа с поиском -->
+        <div class="mb-3 position-relative">
+            <label for="order_search" class="form-label">Заказ</label>
+            <input type="text" class="form-control" id="order_search" placeholder="Введите номер заказа..." autocomplete="off"
+                   value="{{ transaction.order.order_number if transaction and transaction.order else '' }}">
+            <input type="hidden" id="order_id" name="order_id" value="{{ transaction.order_id if transaction else '' }}">
+            <div id="order_results" class="list-group position-absolute w-100" style="z-index: 1000; max-height: 200px; overflow-y: auto; display: none;"></div>
+            <small class="form-text text-muted" id="order_info"></small>
         </div>
+
         <div class="mb-3">
             <label for="comment" class="form-label">Комментарий</label>
             <textarea class="form-control" id="comment" name="comment" rows="2">{{ transaction.comment if transaction else '' }}</textarea>
@@ -62,4 +64,107 @@
         <a href="{{ url_for('finance.transactions_list') }}" class="btn btn-secondary">Отмена</a>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Поиск контрагентов (как в продажах)
+    const customerInput = document.getElementById('customer_search');
+    const customerId = document.getElementById('customer_id');
+    const customerResults = document.getElementById('customer_results');
+    let customerTimeout;
+
+    customerInput.addEventListener('input', function() {
+        clearTimeout(customerTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            customerResults.style.display = 'none';
+            return;
+        }
+        customerTimeout = setTimeout(() => {
+            fetch(`/sales/customers/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    customerResults.innerHTML = '';
+                    if (data.results.length > 0) {
+                        data.results.forEach(item => {
+                            const a = document.createElement('a');
+                            a.href = '#';
+                            a.className = 'list-group-item list-group-item-action';
+                            a.dataset.id = item.id;
+                            a.textContent = item.text;
+                            a.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                customerInput.value = this.textContent;
+                                customerId.value = this.dataset.id;
+                                customerResults.style.display = 'none';
+                            });
+                            customerResults.appendChild(a);
+                        });
+                        customerResults.style.display = 'block';
+                    } else {
+                        customerResults.style.display = 'none';
+                    }
+                });
+        }, 300);
+    });
+
+    customerInput.addEventListener('blur', function() {
+        setTimeout(() => { customerResults.style.display = 'none'; }, 200);
+    });
+
+    // Поиск заказов
+    const orderInput = document.getElementById('order_search');
+    const orderId = document.getElementById('order_id');
+    const orderResults = document.getElementById('order_results');
+    const orderInfo = document.getElementById('order_info');
+    let orderTimeout;
+
+    orderInput.addEventListener('input', function() {
+        clearTimeout(orderTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            orderResults.style.display = 'none';
+            return;
+        }
+        orderTimeout = setTimeout(() => {
+            fetch(`/finance/orders/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    orderResults.innerHTML = '';
+                    if (data.results.length > 0) {
+                        data.results.forEach(item => {
+                            const a = document.createElement('a');
+                            a.href = '#';
+                            a.className = 'list-group-item list-group-item-action';
+                            a.dataset.id = item.id;
+                            a.textContent = item.text;
+                            a.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                orderInput.value = this.textContent;
+                                orderId.value = this.dataset.id;
+                                orderResults.style.display = 'none';
+                                // Можно дополнительно получить детали заказа (если нужно)
+                                // и отобразить их в orderInfo
+                                orderInfo.textContent = 'Заказ выбран';
+                            });
+                            orderResults.appendChild(a);
+                        });
+                        orderResults.style.display = 'block';
+                    } else {
+                        orderResults.style.display = 'none';
+                    }
+                });
+        }, 300);
+    });
+
+    orderInput.addEventListener('blur', function() {
+        setTimeout(() => { orderResults.style.display = 'none'; }, 200);
+    });
+
+    // Если при редактировании уже есть заказ, покажем информацию
+    {% if transaction and transaction.order %}
+        orderInfo.textContent = 'Заказ №{{ transaction.order.order_number }} от {{ transaction.order.order_date.strftime("%d.%m.%Y") }}, сумма {{ transaction.order.total_amount }}';
+    {% endif %}
+});
+</script>
 {% endblock %}

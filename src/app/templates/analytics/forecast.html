@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Прогнозирование продаж</h1>
+    {% if error %}
+        <div class="alert alert-warning">{{ error }}</div>
+    {% else %}
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Прогноз на 30 дней</h5>
+                        <h3>{{ "{:,.0f}".format(forecast) }} ₽</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">Исторические данные (90 дней)</div>
+                    <div class="card-body">
+                        <canvas id="forecastChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3">
+            <a href="{{ url_for('analytics.forecast_csv') }}" class="btn btn-success">Экспорт CSV (история)</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ hist_dates | tojson }},
+            datasets: [{
+                label: 'Факт, ₽',
+                data: {{ hist_values | tojson }},
+                borderColor: '#FF5252',
+                backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                fill: true,
+                tension: 0.2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+{% endblock %}

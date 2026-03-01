@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Динамика прибыли и расходов</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.profit_dynamics_csv') }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <canvas id="profitChart" style="max-height: 400px;"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('profitChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ months_labels | tojson }},
+            datasets: [
+                {
+                    label: 'Доходы',
+                    data: {{ income_data | tojson }},
+                    backgroundColor: '#4CAF50'
+                },
+                {
+                    label: 'Расходы',
+                    data: {{ expense_data | tojson }},
+                    backgroundColor: '#FF5252'
+                },
+                {
+                    label: 'Прибыль',
+                    data: {{ profit_data | tojson }},
+                    type: 'line',
+                    borderColor: '#FF9800',
+                    backgroundColor: 'transparent',
+                    tension: 0.2,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,73 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Заказы{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
-    <h1>Заказы</h1>
-    <a href="{{ url_for('sales.order_create') }}" class="btn btn-primary mb-3">Создать заказ</a>
-    
-    <!-- Фильтр по статусу -->
-    <div class="mb-3">
-        <form method="GET" class="row g-2">
-            <div class="col-auto">
-                <select name="status" class="form-select">
-                    <option value="">Все статусы</option>
-                    <option value="new" {% if current_status == 'new' %}selected{% endif %}>Новый</option>
-                    <option value="processing" {% if current_status == 'processing' %}selected{% endif %}>В обработке</option>
-                    <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Выполнен</option>
-                    <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Отменён</option>
-                </select>
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary">Фильтр</button>
-                <a href="{{ url_for('sales.orders_list') }}" class="btn btn-secondary">Сбросить</a>
-            </div>
-        </form>
+    <h2>Заказы</h2>
+    <a href="{{ url_for('sales.order_create') }}" class="btn btn-primary mb-3">
+        <i class="bi bi-plus-circle"></i> Создать заказ
+    </a>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Клиент</th>
+                    <th>Дата</th>
+                    <th>Сумма</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_number }}</td>
+                    <td>{{ order.customer.name }}</td>
+                    <td>{{ order.order_date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ order.total_amount }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if order.status == 'completed' else 'warning' if order.status == 'processing' else 'secondary' }}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('sales.order_detail', order_id=order.id) }}" class="btn btn-sm btn-info" title="Просмотр">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center">Нет заказов</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Номер</th>
-                <th>Дата</th>
-                <th>Клиент</th>
-                <th>Сумма</th>
-                <th>Статус</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-                            <td>
-                    <a href="{{ url_for('sales.order_detail', order_id=order.id) }}" class="btn btn-sm btn-info">Детали</a>
-                    
-                    {% if order.status == 'new' %}
-                    <form action="{{ url_for('sales.order_change_status', order_id=order.id) }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="status" value="processing">
-                        <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Перевести в обработку?')">В обработку</button>
-                    </form>
-                    {% endif %}
-                    
-                    {% if order.status == 'processing' %}
-                    <form action="{{ url_for('sales.order_change_status', order_id=order.id) }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="status" value="completed">
-                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Завершить заказ? Товары будут списаны со склада.')">Выполнить</button>
-                    </form>
-                    <form action="{{ url_for('sales.order_change_status', order_id=order.id) }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="status" value="cancelled">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Отменить заказ? Резерв будет снят.')">Отменить</button>
-                    </form>
-                    {% endif %}
-                    
-                    {% if order.status == 'completed' %}
-                    <span class="text-muted">Завершён</span>
-                    {% endif %}
-                    
-                    {% if order.status == 'cancelled' %}
-                    <span class="text-muted">Отменён</span>
-                    {% endif %}
-                </td>
-        </tbody>
-    </table>
 </div>
 {% endblock %}

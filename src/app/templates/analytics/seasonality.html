@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Сезонность продаж</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.seasonality_csv') }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <canvas id="seasonalityChart" style="max-height: 400px;"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('seasonalityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ months | tojson }},
+            datasets: [{
+                label: 'Продажи, ₽',
+                data: {{ sales | tojson }},
+                borderColor: '#FF5252',
+                backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                fill: true,
+                tension: 0.2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+{% endblock %}

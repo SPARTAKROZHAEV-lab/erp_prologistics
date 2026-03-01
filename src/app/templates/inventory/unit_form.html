@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if unit %}Редактировать{% else %}Добавить{% endif %} единицу измерения</h2>
+    <form method="post">
+        <div class="mb-3">
+            <label for="name" class="form-label">Название</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ unit.name if unit else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="code" class="form-label">Код (краткий)</label>
+            <input type="text" class="form-control" id="code" name="code" value="{{ unit.code if unit else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="2">{{ unit.description if unit else '' }}</textarea>
+        </div>
+        {% if unit %}
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if unit.is_active %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">Активна</label>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{{ url_for('inventory.units_list') }}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

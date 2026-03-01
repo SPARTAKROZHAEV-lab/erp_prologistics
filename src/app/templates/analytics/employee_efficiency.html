@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Эффективность сотрудников</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.employee_efficiency_csv') }}?{{ request.query_string.decode() }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Сотрудник</th>
+                <th>Создано заказов</th>
+                <th>Сумма заказов</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in employees %}
+            <tr>
+                <td>{{ e.name }}</td>
+                <td>{{ e.orders }}</td>
+                <td>{{ "{:,.0f}".format(e.total) }} ₽</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

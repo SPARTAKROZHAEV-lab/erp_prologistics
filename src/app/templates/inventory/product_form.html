@@ -35,18 +35,74 @@
                 </select>
             </div>
             <div class="col-md-6 mb-3">
-                <label for="unit" class="form-label">Единица измерения</label>
-                <input type="text" class="form-control" id="unit" name="unit" value="{{ product.unit if product else 'шт' }}">
+                <label for="unit_id" class="form-label">Единица измерения (из справочника)</label>
+                <select class="form-control" id="unit_id" name="unit_id">
+                    <option value="">-- Не выбрано --</option>
+                    {% for unit in units %}
+                    <option value="{{ unit.id }}" {% if product and product.unit_id == unit.id %}selected{% endif %}>{{ unit.name }} ({{ unit.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <!-- Текстовое поле unit оставлено для обратной совместимости, но рекомендуется использовать справочник -->
+        <div class="mb-3">
+            <label for="unit" class="form-label">Единица измерения (текстом, если нет в справочнике)</label>
+            <input type="text" class="form-control" id="unit" name="unit" value="{{ product.unit if product else 'шт' }}">
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="price" class="form-label">Цена продажи</label>
+                <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ product.price if product else '' }}">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="purchase_price" class="form-label">Закупочная цена</label>
+                <input type="number" step="0.01" class="form-control" id="purchase_price" name="purchase_price" value="{{ product.purchase_price if product else '' }}">
             </div>
         </div>
         <div class="row">
             <div class="col-md-6 mb-3">
-                <label for="price" class="form-label">Цена</label>
-                <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ product.price if product else '' }}">
+                <label for="cost" class="form-label">Себестоимость (устарело, лучше использовать закупочную)</label>
+                <input type="number" step="0.01" class="form-control" id="cost" name="cost" value="{{ product.cost if product else '' }}">
             </div>
             <div class="col-md-6 mb-3">
-                <label for="cost" class="form-label">Себестоимость</label>
-                <input type="number" step="0.01" class="form-control" id="cost" name="cost" value="{{ product.cost if product else '' }}">
+                <label for="currency_id" class="form-label">Валюта цены</label>
+                <select class="form-control" id="currency_id" name="currency_id">
+                    <option value="">-- Не выбрано (RUB по умолчанию) --</option>
+                    {% for cur in currencies %}
+                    <option value="{{ cur.id }}" {% if product and product.currency_id == cur.id %}selected{% endif %}>{{ cur.code }} ({{ cur.symbol }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="manufacturer_id" class="form-label">Производитель (контрагент)</label>
+                <select class="form-control" id="manufacturer_id" name="manufacturer_id">
+                    <option value="">-- Не выбрано --</option>
+                    {% for mfr in manufacturers %}
+                    <option value="{{ mfr.id }}" {% if product and product.manufacturer_id == mfr.id %}selected{% endif %}>{{ mfr.name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Только контрагенты с отметкой "Производитель"</small>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="suppliers" class="form-label">Поставщики (контрагенты)</label>
+                <select class="form-control" id="suppliers" name="suppliers" multiple size="5">
+                    {% for supp in suppliers %}
+                    <option value="{{ supp.id }}" {% if product and supp in product.suppliers %}selected{% endif %}>{{ supp.name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Удерживайте Ctrl для выбора нескольких. Только контрагенты с отметкой "Поставщик".</small>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="min_stock" class="form-label">Минимальный остаток</label>
+                <input type="number" step="0.01" class="form-control" id="min_stock" name="min_stock" value="{{ product.min_stock if product else '' }}">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="max_stock" class="form-label">Максимальный остаток</label>
+                <input type="number" step="0.01" class="form-control" id="max_stock" name="max_stock" value="{{ product.max_stock if product else '' }}">
             </div>
         </div>
         {% if product %}

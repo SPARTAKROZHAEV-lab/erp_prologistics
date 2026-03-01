@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Конверсия заказов</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.order_conversion_csv') }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <canvas id="conversionChart" style="max-height: 400px;"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('conversionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: {{ labels | tojson }},
+            datasets: [{
+                data: {{ values | tojson }},
+                backgroundColor: ['#FF5252', '#FF9800', '#FFEB3B', '#4CAF50', '#2196F3']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

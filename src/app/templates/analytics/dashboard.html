@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Дашборд аналитики</h1>
+
+    <!-- Карточки KPI -->
+    <div class="row">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="card-title">Выручка (30 дн.)</h6>
+                    <h3>{{ "{:,.0f}".format(revenue) }} ₽</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h6 class="card-title">Расходы (30 дн.)</h6>
+                    <h3>{{ "{:,.0f}".format(expenses) }} ₽</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="card-title">Прибыль (30 дн.)</h6>
+                    <h3>{{ "{:,.0f}".format(profit) }} ₽</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6 class="card-title">Заказы (30 дн.)</h6>
+                    <h3>{{ orders_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">Средний чек</h6>
+                    <h3>{{ "{:,.0f}".format(avg_check) }} ₽</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="row mt-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Динамика продаж по дням</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Топ-5 товаров по выручке</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="topProductsChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // График продаж по дням (линейный)
+    const ctxSales = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctxSales, {
+        type: 'line',
+        data: {
+            labels: {{ dates_labels | tojson }},
+            datasets: [{
+                label: 'Выручка, ₽',
+                data: {{ sales_data | tojson }},
+                borderColor: '#FF5252',
+                backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                tension: 0.2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Круговая диаграмма топ-5 товаров
+    const ctxProducts = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(ctxProducts, {
+        type: 'doughnut',
+        data: {
+            labels: {{ top_products_names | tojson }},
+            datasets: [{
+                data: {{ top_products_values | tojson }},
+                backgroundColor: ['#FF5252', '#FF9800', '#FFEB3B', '#4CAF50', '#2196F3']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

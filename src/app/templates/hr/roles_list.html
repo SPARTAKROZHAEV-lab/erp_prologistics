@@ -1,41 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Управление ролями{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
-    <h1>Роли</h1>
-    <a href="{{ url_for('hr.role_add') }}" class="btn btn-primary mb-3">Создать роль</a>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Описание</th>
-                <th>Кол-во разрешений</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for role in roles %}
-            <tr>
-                <td>{{ role.id }}</td>
-                <td>{{ role.name }}</td>
-                <td>{{ role.description or '' }}</td>
-                <td>{{ role.permissions|length }}</td>
-                <td>
-                    <a href="{{ url_for('hr.role_edit', role_id=role.id) }}" class="btn btn-sm btn-warning">Редактировать</a>
-                    {% if role.name not in ['admin', 'manager', 'hr', 'storekeeper', 'accountant', 'employee'] %}
-                    <form action="{{ url_for('hr.role_delete', role_id=role.id) }}" method="POST" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить роль?')">Удалить</button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5" class="text-center">Нет ролей</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h2>Роли</h2>
+    <a href="{{ url_for('hr.role_add') }}" class="btn btn-primary mb-3">
+        <i class="bi bi-plus-circle"></i> Добавить роль
+    </a>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Описание</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in roles %}
+                <tr>
+                    <td>{{ role.name }}</td>
+                    <td>{{ role.description or '' }}</td>
+                    <td>
+                        <a href="{{ url_for('hr.role_edit', role_id=role.id) }}" class="btn btn-sm btn-warning" title="Редактировать">
+    <i class="bi bi-pencil"></i>
+</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center">Нет ролей</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

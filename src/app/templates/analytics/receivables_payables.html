@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Дебиторская задолженность</h1>
+    <div class="mb-3">
+        <a href="{{ url_for('analytics.receivables_payables_csv') }}" class="btn btn-success">Экспорт CSV</a>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">Неоплаченные счета</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Клиент</th>
+                                <th>Сумма долга</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in receivables %}
+                            <tr>
+                                <td>{{ r.name }}</td>
+                                <td>{{ "{:,.0f}".format(r.debt) }} ₽</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning">Кредиторская задолженность (пока не реализовано)</div>
+                <div class="card-body">
+                    <p class="text-muted">В разработке</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

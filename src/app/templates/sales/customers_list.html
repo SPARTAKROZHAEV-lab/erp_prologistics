@@ -1,38 +1,42 @@
 {% extends "base.html" %}
 
-{% block title %}Клиенты{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
-    <h1>Клиенты</h1>
-    <a href="{{ url_for('sales.customer_add') }}" class="btn btn-primary mb-3">Добавить клиента</a>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Телефон</th>
-                <th>Email</th>
-                <th>Адрес</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for customer in customers %}
-            <tr>
-                <td>{{ customer.id }}</td>
-                <td>{{ customer.name }}</td>
-                <td>{{ customer.phone }}</td>
-                <td>{{ customer.email }}</td>
-                <td>{{ customer.address }}</td>
-                <td>
-                    <a href="{{ url_for('sales.customer_edit', customer_id=customer.id) }}" class="btn btn-sm btn-warning">Редактировать</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="6" class="text-center">Нет клиентов</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h2>Клиенты</h2>
+    <a href="{{ url_for('sales.customer_add') }}" class="btn btn-primary mb-3">
+        <i class="bi bi-plus-circle"></i> Добавить клиента
+    </a>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Наименование</th>
+                    <th>Тип</th>
+                    <th>Телефон</th>
+                    <th>Email</th>
+                    <th>Активен</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cust in customers %}
+                <tr>
+                    <td>{{ cust.name }}</td>
+                    <td>{{ cust.type }}</td>
+                    <td>{{ cust.phone or '' }}</td>
+                    <td>{{ cust.email or '' }}</td>
+                    <td>{% if cust.is_active %}Да{% else %}Нет{% endif %}</td>
+                    <td>
+                        <a href="{{ url_for('sales.customer_edit', customer_id=cust.id) }}" class="btn btn-sm btn-warning" title="Редактировать">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center">Нет клиентов</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

@@ -6,14 +6,12 @@
 <div class="container mt-4">
     <h1>Создание заказа</h1>
     <form method="POST" id="orderForm">
-        <div class="mb-3">
-            <label for="customer_id" class="form-label">Клиент *</label>
-            <select class="form-control" id="customer_id" name="customer_id" required>
-                <option value="">-- Выберите клиента --</option>
-                {% for customer in customers %}
-                <option value="{{ customer.id }}">{{ customer.name }}</option>
-                {% endfor %}
-            </select>
+        <!-- Блок выбора клиента с поиском -->
+        <div class="mb-3 position-relative">
+            <label for="customer_search" class="form-label">Клиент *</label>
+            <input type="text" class="form-control" id="customer_search" placeholder="Введите название, email или телефон..." autocomplete="off" required>
+            <input type="hidden" id="customer_id" name="customer_id" required>
+            <div id="customer_results" class="list-group position-absolute w-100" style="z-index: 1000; max-height: 200px; overflow-y: auto; display: none;"></div>
         </div>
 
         <h4>Товары</h4>
@@ -21,6 +19,7 @@
             <thead>
                 <tr>
                     <th>Товар</th>
+                    <th>Склад</th>
                     <th>Количество</th>
                     <th>Цена</th>
                     <th>Сумма</th>
@@ -33,8 +32,14 @@
                         <select class="form-control product-select" name="product_id[]" required>
                             <option value="">-- Выберите товар --</option>
                             {% for product in products %}
-                            <option value="{{ product.id }}" data-price="{{ product.price or 0 }}">{{ product.name }} ({{ product.sku }}) - доступно: {{ product.stocks|sum(attribute='available') }}</option>
+                            <option value="{{ product.id }}" data-price="{{ product.price or 0 }}">{{ product.name }} ({{ product.sku }})</option>
                             {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control warehouse-select" name="warehouse_id[]" required>
+                            <option value="">-- Выберите склад --</option>
+                            <!-- Будут заполняться динамически через JS -->
                         </select>
                     </td>
                     <td>
@@ -53,7 +58,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3"></td>
+                    <td colspan="4"></td>
                     <td><strong>Итого: <span id="totalAmount">0.00</span></strong></td>
                     <td></td>
                 </tr>
@@ -69,20 +74,49 @@
 </div>
 
 <script>
+// Данные о доступных складах для каждого товара (передаём из Flask)
+const productWarehouses = {
+    {% for product in products %}
+    "{{ product.id }}": [
+        {% for stock in product.stocks if stock.quantity > 0 %}
+        { "id": {{ stock.warehouse_id }}, "name": "{{ stock.warehouse.name }}", "available": {{ stock.available }} },
+        {% endfor %}
+    ],
+    {% endfor %}
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     let rowCount = 1;
 
-    // Функция обновления цены и суммы строки
+    // Функции для работы с товарами (без изменений)
+    function updateWarehouseOptions(row) {
+        const productSelect = row.querySelector('.product-select');
+        const warehouseSelect = row.querySelector('.warehouse-select');
+        const productId = productSelect.value;
+        warehouseSelect.innerHTML = '<option value="">-- Выберите склад --</option>';
+        if (productId && productWarehouses[productId]) {
+            productWarehouses[productId].forEach(wh => {
+                const option = document.createElement('option');
+                option.value = wh.id;
+                option.textContent = `${wh.name} (доступно: ${wh.available})`;
+                option.dataset.available = wh.available;
+                warehouseSelect.appendChild(option);
+            });
+        }
+        updateRow(row);
+    }
+
     function updateRow(row) {
-        const select = row.querySelector('.product-select');
-        const quantity = row.querySelector('.quantity');
+        const productSelect = row.querySelector('.product-select');
+        const warehouseSelect = row.querySelector('.warehouse-select');
+        const quantityInput = row.querySelector('.quantity');
         const priceField = row.querySelector('.price');
         const totalField = row.querySelector('.item-total');
 
-        if (select.value && quantity.value) {
-            const selectedOption = select.options[select.selectedIndex];
+        if (productSelect.value && warehouseSelect.value && quantityInput.value) {
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
             const price = parseFloat(selectedOption.dataset.price) || 0;
-            const qty = parseFloat(quantity.value) || 0;
+            const qty = parseFloat(quantityInput.value) || 0;
             const total = price * qty;
 
             priceField.value = price.toFixed(2);
@@ -94,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTotal();
     }
 
-    // Обновление общей суммы
     function updateTotal() {
         let total = 0;
         document.querySelectorAll('.item-total').forEach(field => {
@@ -103,7 +136,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalAmount').textContent = total.toFixed(2);
     }
 
-    // Добавление новой строки
+    function attachEvents(row) {
+        row.querySelector('.product-select').addEventListener('change', function() {
+            updateWarehouseOptions(row);
+        });
+        row.querySelector('.warehouse-select').addEventListener('change', function() {
+            updateRow(row);
+        });
+        row.querySelector('.quantity').addEventListener('input', function() {
+            updateRow(row);
+        });
+        row.querySelector('.remove-item').addEventListener('click', function() {
+            row.remove();
+            updateTotal();
+        });
+    }
+
     document.getElementById('addItem').addEventListener('click', function() {
         const tbody = document.querySelector('#itemsTable tbody');
         const newRow = document.createElement('tr');
@@ -113,8 +161,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 <select class="form-control product-select" name="product_id[]" required>
                     <option value="">-- Выберите товар --</option>
                     {% for product in products %}
-                    <option value="{{ product.id }}" data-price="{{ product.price or 0 }}">{{ product.name }} ({{ product.sku }}) - доступно: {{ product.stocks|sum(attribute='available') }}</option>
+                    <option value="{{ product.id }}" data-price="{{ product.price or 0 }}">{{ product.name }} ({{ product.sku }})</option>
                     {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select class="form-control warehouse-select" name="warehouse_id[]" required>
+                    <option value="">-- Выберите склад --</option>
                 </select>
             </td>
             <td>
@@ -131,27 +184,71 @@ document.addEventListener('DOMContentLoaded', function() {
             </td>
         `;
         tbody.appendChild(newRow);
-        rowCount++;
-
-        // Привязка событий к новой строке
         attachEvents(newRow);
+        rowCount++;
     });
 
-    // Привязка событий к строке
-    function attachEvents(row) {
-        row.querySelector('.product-select').addEventListener('change', function() { updateRow(row); });
-        row.querySelector('.quantity').addEventListener('input', function() { updateRow(row); });
-        row.querySelector('.remove-item').addEventListener('click', function() {
-            row.remove();
-            updateTotal();
-        });
-    }
-
-    // Привязка к первой строке
+    // Инициализация первой строки
     const firstRow = document.getElementById('item-row-0');
     attachEvents(firstRow);
-    // Скрыть кнопку удаления у первой строки (если она одна)
     firstRow.querySelector('.remove-item').style.display = 'none';
+
+    // --- НОВЫЙ КОД: Поиск клиента ---
+    const customerInput = document.getElementById('customer_search');
+    const customerId = document.getElementById('customer_id');
+    const customerResults = document.getElementById('customer_results');
+    let customerTimeout;
+
+    customerInput.addEventListener('input', function() {
+        clearTimeout(customerTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            customerResults.style.display = 'none';
+            return;
+        }
+        customerTimeout = setTimeout(() => {
+            fetch(`/sales/customers/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    customerResults.innerHTML = '';
+                    if (data.results.length > 0) {
+                        data.results.forEach(item => {
+                            const a = document.createElement('a');
+                            a.href = '#';
+                            a.className = 'list-group-item list-group-item-action';
+                            a.dataset.id = item.id;
+                            a.textContent = item.text;
+                            a.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                customerInput.value = this.textContent;
+                                customerId.value = this.dataset.id;
+                                customerResults.style.display = 'none';
+                            });
+                            customerResults.appendChild(a);
+                        });
+                        customerResults.style.display = 'block';
+                    } else {
+                        customerResults.style.display = 'none';
+                    }
+                });
+        }, 300);
+    });
+
+    // Скрывать результаты при потере фокуса
+    customerInput.addEventListener('blur', function() {
+        setTimeout(() => { customerResults.style.display = 'none'; }, 200);
+    });
+
+    // Если поле пустое, сбрасываем скрытый ID
+    customerInput.addEventListener('change', function() {
+        if (this.value === '') {
+            customerId.value = '';
+        }
+    });
+
+    // Если есть уже выбранный клиент при редактировании (не используется, но на будущее)
+    // При загрузке страницы, если скрытое поле уже заполнено (при редактировании),
+    // можно заполнить поле поиска названием клиента. Пока не требуется.
 });
 </script>
 {% endblock %}

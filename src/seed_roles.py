@@ -1,27 +1,30 @@
-# seed_roles.py
-# Скрипт для добавления базовых ролей в базу данных (исправленная версия для работы в контейнере).
-
 from app import create_app
 from app.extensions import db
-from app.models.role import Role
+from app.models import Role, User
 
 app = create_app()
 with app.app_context():
-    roles_to_add = [
-        {'name': 'admin', 'description': 'Супер-администратор с полным доступом'},
-        {'name': 'manager', 'description': 'Менеджер (управление заказами, клиентами)'},
-        {'name': 'accountant', 'description': 'Бухгалтер (доступ к финансам)'},
-        {'name': 'employee', 'description': 'Сотрудник (базовый доступ)'},
-    ]
-    
-    for role_data in roles_to_add:
-        existing_role = Role.query.filter_by(name=role_data['name']).first()
-        if not existing_role:
-            role = Role(name=role_data['name'], description=role_data['description'])
-            db.session.add(role)
-            print(f"Добавлена роль: {role_data['name']}")
-        else:
-            print(f"Роль уже существует: {role_data['name']}")
-    
+    # Создаём базовые роли
+    default_roles = ['admin', 'manager', 'accountant', 'employee', 'hr', 'storekeeper']
+    for role_name in default_roles:
+        if not Role.query.filter_by(name=role_name).first():
+            db.session.add(Role(name=role_name))
     db.session.commit()
-    print("Инициализация ролей завершена.")
+    print("✅ Базовые роли созданы или уже существуют")
+
+    # Назначаем пользователю admin@example.com роль admin
+    user = User.query.filter_by(email='admin@example.com').first()
+    if user:
+        admin_role = Role.query.filter_by(name='admin').first()
+        if admin_role and admin_role not in user.roles:
+            user.roles.append(admin_role)
+            db.session.commit()
+            print(f"✅ Роль admin назначена пользователю {user.email}")
+        else:
+            print("ℹ️ Роль admin уже есть у пользователя или роль не найдена")
+    else:
+        print("❌ Пользователь admin@example.com не найден")
+
+    # Проверка ролей
+    if user:
+        print("🔍 Текущие роли пользователя:", [role.name for role in user.roles])
