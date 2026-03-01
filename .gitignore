@@ -16,3 +16,4 @@ htmlcov/
 # IDE
 .vscode/
 .idea/
+venv/
