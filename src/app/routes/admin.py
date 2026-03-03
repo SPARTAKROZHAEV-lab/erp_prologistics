@@ -97,11 +97,11 @@ def fix_db():
     # Запускаем seed-скрипт
     import subprocess
     try:
+        # Используем абсолютный путь к скрипту внутри контейнера
         seed_result = subprocess.run(
-            [sys.executable, 'seed_test_data.py'],
+            [sys.executable, '/app/seed_test_data.py'],
             capture_output=True,
-            text=True,
-            cwd='/app/src'
+            text=True
         )
         result += f"<pre>Результат seed_test_data.py:\n{seed_result.stdout}\n{seed_result.stderr}</pre>"
     except Exception as e:
