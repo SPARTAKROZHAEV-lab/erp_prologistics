@@ -63,3 +63,16 @@ def revert_impersonate():
     session.pop('original_user_id', None)
     flash(f'Вы вернулись к учётной записи {original_user.email}', 'success')
     return redirect(url_for('admin.users_list'))
+@admin_bp.route('/init-db')
+@login_required
+def init_db():
+    # Проверяем, что пользователь — admin
+    if not current_user.has_role('admin'):
+        return "Доступ запрещён", 403
+    try:
+        import subprocess
+        import sys
+        result = subprocess.run([sys.executable, 'seed_test_data.py'], capture_output=True, text=True, cwd='/app/src')
+        return f"<pre>{result.stdout}\n{result.stderr}</pre>"
+    except Exception as e:
+        return f"Ошибка: {e}"
