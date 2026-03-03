@@ -108,3 +108,27 @@ def fix_db():
         result += f"<p>❌ Ошибка при запуске seed: {e}</p>"
 
     return result
+@admin_bp.route('/grant-admin')
+def grant_admin():
+    from app.models import User, Role, Permission
+    from app.extensions import db
+
+    user = User.query.filter_by(username='admin').first()
+    if not user:
+        return "Пользователь admin не найден. Сначала выполните /fix-db."
+
+    admin_role = Role.query.filter_by(name='admin').first()
+    if not admin_role:
+        admin_role = Role(name='admin', description='Администратор с полными правами')
+        db.session.add(admin_role)
+        db.session.flush()
+
+    if admin_role not in user.roles:
+        user.roles.append(admin_role)
+
+    # Даём роли admin все разрешения (если ещё не дали)
+    all_perms = Permission.query.all()
+    admin_role.permissions = all_perms
+    db.session.commit()
+
+    return f"✅ Пользователю {user.username} назначена роль admin. У роли admin теперь {len(all_perms)} разрешений."
