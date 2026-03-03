@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Назначение прав для роли "{{ role.name }}"</h2>
+    <form method="post">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>Все разрешения</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for perm in all_perms %}
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="permissions" value="{{ perm.codename }}" id="perm{{ perm.id }}" {% if perm.codename in role_perms %}checked{% endif %}>
+                            <label class="form-check-label" for="perm{{ perm.id }}">
+                                {{ perm.name }} <small class="text-muted">({{ perm.codename }})</small>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{{ url_for('hr.roles_list') }}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

@@ -6,7 +6,8 @@ from app.models import Employee, Department, Position, User
 from app.extensions import db
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify
-from app.models.permission import Permission
+from app.models import Permission
+from app.decorators import permission_required
 from app.models.role import Role
 
 
@@ -304,3 +305,22 @@ def role_delete(role_id):
         db.session.commit()
         flash('Роль удалена', 'success')
     return redirect(url_for('hr.roles_list'))
+
+@hr_bp.route('/roles/<int:role_id>/permissions', methods=['GET', 'POST'])
+@login_required
+@permission_required('assign_permissions')
+def role_permissions(role_id):
+    role = Role.query.get_or_404(role_id)
+    if request.method == 'POST':
+        selected_perms = request.form.getlist('permissions')
+        role.permissions = []
+        for perm_codename in selected_perms:
+            perm = Permission.query.filter_by(codename=perm_codename).first()
+            if perm:
+                role.permissions.append(perm)
+        db.session.commit()
+        flash('Права роли обновлены', 'success')
+        return redirect(url_for('hr.roles_list'))
+    all_perms = Permission.query.order_by(Permission.name).all()
+    role_perms = {p.codename for p in role.permissions}
+    return render_template('hr/role_permissions.html', role=role, all_perms=all_perms, role_perms=role_perms)

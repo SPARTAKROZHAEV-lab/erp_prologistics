@@ -35,3 +35,22 @@ def accountant_required(f):
 
 def employee_required(f):
     return role_required('employee')(f)
+
+def permission_required(*permissions):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash('Пожалуйста, войдите для доступа.', 'warning')
+                return redirect(url_for('auth.login'))
+            user_perms = set()
+            for role in current_user.roles:
+                for perm in role.permissions:
+                    user_perms.add(perm.codename)
+            if any(p in user_perms for p in permissions):
+                return f(*args, **kwargs)
+            else:
+                flash('У вас недостаточно прав для доступа к этой странице.', 'danger')
+                return redirect(url_for('index'))
+        return decorated_function
+    return decorator

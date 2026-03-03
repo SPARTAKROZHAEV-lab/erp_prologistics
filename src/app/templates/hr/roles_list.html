@@ -21,9 +21,10 @@
                     <td>{{ role.name }}</td>
                     <td>{{ role.description or '' }}</td>
                     <td>
-                        <a href="{{ url_for('hr.role_edit', role_id=role.id) }}" class="btn btn-sm btn-warning" title="Редактировать">
-    <i class="bi bi-pencil"></i>
-</a>
+                        <td>
+    <a href="{{ url_for('hr.role_permissions', role_id=role.id) }}" class="btn btn-sm btn-info">Права</a>
+    <a href="{{ url_for('hr.role_edit', role_id=role.id) }}" class="btn btn-sm btn-warning">Редактировать</a>
+</td>
                     </td>
                 </tr>
                 {% else %}
