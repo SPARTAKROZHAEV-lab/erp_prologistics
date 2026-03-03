@@ -13,6 +13,41 @@ from app.models import (User, Role, Customer, Product, Category, Warehouse,
 app = create_app()
 app.app_context().push()
 
+# ---------- Роли и пользователи ----------
+def create_roles():
+    """Создаёт базовые роли, если их нет."""
+    roles = ['admin', 'manager', 'accountant', 'hr', 'storekeeper', 'sales']
+    for name in roles:
+        if not Role.query.filter_by(name=name).first():
+            role = Role(name=name, description=f'Роль {name}')
+            db.session.add(role)
+    db.session.commit()
+    print("✅ Роли созданы")
+
+def create_admin_user():
+    """Создаёт пользователя admin с паролем admin и ролью admin."""
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(
+            username='admin',
+            email='admin@example.com',
+            first_name='Admin',
+            last_name='Admin'
+        )
+        admin.set_password('admin')
+        db.session.add(admin)
+        db.session.flush()  # чтобы получить id
+        
+        # Назначаем роль admin
+        admin_role = Role.query.filter_by(name='admin').first()
+        if admin_role:
+            admin.roles.append(admin_role)
+        db.session.commit()
+        print("✅ Пользователь admin создан (пароль: admin)")
+    else:
+        print("ℹ️ Пользователь admin уже существует")
+
+# ---------- Остальные функции (без изменений) ----------
 def random_string(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
@@ -260,7 +295,7 @@ def create_additional_transactions():
         customer = random.choice(customers) if random.random() > 0.5 else None
         transaction = Transaction(
             type='expense',
-            amount=amount,
+            amount=Decimal(str(amount)),
             currency='RUB',
             transaction_date=tdate,
             description=f"Расход {random_string(8)}",
@@ -275,6 +310,8 @@ def create_additional_transactions():
 
 if __name__ == '__main__':
     print("🚀 Начало генерации тестовых данных...")
+    create_roles()
+    create_admin_user()
     create_categories()
     create_units()
     create_currencies()
