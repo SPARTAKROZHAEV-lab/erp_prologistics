@@ -117,16 +117,38 @@ def grant_admin():
     if not user:
         return "Пользователь admin не найден. Сначала выполните /fix-db."
 
+    # Создаём роль admin, если её нет
     admin_role = Role.query.filter_by(name='admin').first()
     if not admin_role:
         admin_role = Role(name='admin', description='Администратор с полными правами')
         db.session.add(admin_role)
         db.session.flush()
 
+    # Добавляем пользователю роль admin
     if admin_role not in user.roles:
         user.roles.append(admin_role)
 
-    # Даём роли admin все разрешения (если ещё не дали)
+    # Создаём базовые разрешения (если их нет)
+    permissions_data = [
+        ('view_analytics', 'Просмотр аналитики'),
+        ('view_employees', 'Просмотр сотрудников'),
+        ('edit_employees', 'Редактирование сотрудников'),
+        ('view_products', 'Просмотр товаров'),
+        ('edit_products', 'Редактирование товаров'),
+        ('view_orders', 'Просмотр заказов'),
+        ('edit_orders', 'Редактирование заказов'),
+        ('view_customers', 'Просмотр клиентов'),
+        ('edit_customers', 'Редактирование клиентов'),
+        ('view_finance', 'Просмотр финансов'),
+        ('edit_finance', 'Редактирование финансов'),
+        ('assign_permissions', 'Назначение прав'),
+    ]
+
+    for codename, name in permissions_data:
+        if not Permission.query.filter_by(codename=codename).first():
+            db.session.add(Permission(codename=codename, name=name))
+
+    # Назначаем роли admin все разрешения
     all_perms = Permission.query.all()
     admin_role.permissions = all_perms
     db.session.commit()
