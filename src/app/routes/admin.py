@@ -76,3 +76,35 @@ def init_db():
         return f"<pre>{result.stdout}\n{result.stderr}</pre>"
     except Exception as e:
         return f"Ошибка: {e}"
+
+@admin_bp.route('/fix-db')
+def fix_db():
+    import sys
+    from app.extensions import db
+    from flask import current_app
+
+    # Выводим информацию о подключении
+    db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', 'Не задана')
+    result = f"<h3>Текущая БД: {db_uri}</h3>"
+
+    try:
+        # Создаём все таблицы
+        db.create_all()
+        result += "<p>✅ Таблицы созданы через db.create_all()</p>"
+    except Exception as e:
+        result += f"<p>❌ Ошибка при создании таблиц: {e}</p>"
+
+    # Запускаем seed-скрипт
+    import subprocess
+    try:
+        seed_result = subprocess.run(
+            [sys.executable, 'seed_test_data.py'],
+            capture_output=True,
+            text=True,
+            cwd='/app/src'
+        )
+        result += f"<pre>Результат seed_test_data.py:\n{seed_result.stdout}\n{seed_result.stderr}</pre>"
+    except Exception as e:
+        result += f"<p>❌ Ошибка при запуске seed: {e}</p>"
+
+    return result
